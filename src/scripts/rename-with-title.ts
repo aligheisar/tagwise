@@ -4,14 +4,11 @@ import path from "node:path";
 import { tryCatch } from "@aligheisar/try-catch";
 import sanitize from "sanitize-filename";
 import { scanFolder } from "taglib-wasm/folder";
+import { scanFolderOptions } from "../config/scan-folder";
 import type { FolderScanItemError, RenameResult } from "../types";
 
 const renameFilesUsingTitle = async (root: string) => {
-  const result = await scanFolder(root, {
-    continueOnError: true,
-    includeProperties: false,
-    recursive: true,
-  });
+  const result = await scanFolder(root, scanFolderOptions());
 
   const errors: FolderScanItemError[] = [];
   const success: RenameResult[] = [];
