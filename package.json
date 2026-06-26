@@ -19,6 +19,8 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
+    "@aligheisar/try-catch": "0.1.2",
+    "sanitize-filename": "1.6.4",
     "taglib-wasm": "1.4.0"
   }
 }
