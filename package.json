@@ -1,12 +1,12 @@
 {
   "name": "tagwise",
-  "module": "src/index.ts",
+  "module": "src/main.ts",
   "type": "module",
   "private": true,
   "scripts": {
     "check": "biome check",
     "check:fix": "biome check --fix",
-    "dev": "bun run --watch src/index.ts",
+    "dev": "bun run --watch src/main.ts",
     "format": "biome format --write",
     "prepare": "husky"
   },
@@ -19,7 +19,7 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
-    "@aligheisar/try-catch": "0.1.2",
+    "commander": "15.0.0",
     "sanitize-filename": "1.6.4",
     "taglib-wasm": "1.4.0"
   }
