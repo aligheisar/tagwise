@@ -10,20 +10,18 @@ import { RenamerProducer } from "@/infrastructure/producers/renamer";
 import { TaglibScanner } from "@/infrastructure/taglib/scanner";
 import { TaglibTagWriter } from "@/infrastructure/taglib/tag-writer";
 import { createCLI } from "@/presentation/cli";
+import { launchTUI } from "@/presentation/tui";
 
-// Infrastructure
 const scanner = new TaglibScanner();
 const tagWriter = new TaglibTagWriter();
 const filesystem = new NodeFilesystem();
 const libraryRepository = new CacheLibraryRepository();
 
-// Producers — add new producers here
 const producers = new Map([
   ["renamer", new RenamerProducer()],
   ["remix", new RemixTagProducer()],
 ]);
 
-// Application
 const commandBus = new InMemoryCommandBus();
 commandBus.register(
   ScanLibraryCommand,
@@ -34,6 +32,56 @@ commandBus.register(
   new RunHandler(libraryRepository, producers, filesystem, tagWriter),
 );
 
-// Presentation
-const cli = createCLI(commandBus, [...producers.keys()], libraryRepository);
-cli.parse();
+const args = process.argv.slice(2);
+const hasSubcommand = [
+  "scan",
+  "run",
+  "cache",
+  "completion",
+  "--help",
+  "-h",
+  "--version",
+  "-v",
+].some((cmd) => args.includes(cmd));
+
+function expandPath(p: string): string {
+  if (p.startsWith("~")) {
+    return p.replace("~", process.env.HOME ?? "");
+  }
+  return p;
+}
+
+if (!hasSubcommand) {
+  const folderArg = args[0];
+  const isPath =
+    folderArg &&
+    (folderArg.startsWith("/") ||
+      folderArg.startsWith("./") ||
+      folderArg.startsWith("../") ||
+      folderArg.startsWith("~"));
+
+  if (isPath) {
+    launchTUI({
+      commandBus,
+      filesystem,
+      initialFolder: expandPath(folderArg),
+      libraryRepository,
+      producerNames: [...producers.keys()],
+      producers,
+      tagWriter,
+    });
+  } else if (args.length === 0) {
+    launchTUI({
+      commandBus,
+      filesystem,
+      libraryRepository,
+      producerNames: [...producers.keys()],
+      producers,
+      tagWriter,
+    });
+  } else {
+    createCLI(commandBus, [...producers.keys()], libraryRepository).parse();
+  }
+} else {
+  createCLI(commandBus, [...producers.keys()], libraryRepository).parse();
+}

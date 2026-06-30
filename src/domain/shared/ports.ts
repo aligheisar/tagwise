@@ -3,6 +3,7 @@ import type { ScanResult } from "@/domain/media-item/entity";
 type ScanOptions = {
   recursive?: boolean;
   continueOnError?: boolean;
+  signal?: AbortSignal;
 };
 
 type TagUpdate = {
