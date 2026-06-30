@@ -1,5 +1,4 @@
 type MediaTags = {
-  // Basic
   title?: string[];
   artist?: string[];
   album?: string[];
@@ -8,7 +7,6 @@ type MediaTags = {
   year?: number;
   track?: number;
 
-  // Extended
   date?: string | string[];
   albumArtist?: string[];
   composer?: string[];
