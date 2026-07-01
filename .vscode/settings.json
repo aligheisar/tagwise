@@ -1,4 +1,4 @@
 {
   "js/ts.tsdk.path": "node_modules/typescript/lib",
-  "cSpell.words": ["flac", "taglib", "tagwise"]
+  "cSpell.words": ["flac", "opentui", "Renamer", "taglib", "tagwise"]
 }
