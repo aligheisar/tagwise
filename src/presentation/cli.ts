@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { RunCommand } from "@/application/run/command";
 import { ScanLibraryCommand } from "@/application/scan-library/command";
 import type { CommandBus } from "@/domain/shared/command-bus";
-import type { CacheLibraryRepository } from "@/infrastructure/cache/library-repository";
+import type { QueryBus } from "@/domain/shared/query-bus";
 import {
   cacheList,
   cachePurge,
@@ -63,8 +63,8 @@ complete -F _tagwise_completions tagwise
 
 export function createCLI(
   commandBus: CommandBus,
+  queryBus: QueryBus,
   producerNames: string[],
-  libraryRepository: CacheLibraryRepository,
 ): Command {
   const program = new Command();
   program
@@ -97,6 +97,7 @@ export function createCLI(
     )
     .argument("<folder>", "Path to the music folder")
     .action(async (producer: string, folder: string) => {
+      await commandBus.execute(new ScanLibraryCommand(folder));
       await commandBus.execute(new RunCommand(producer, folder));
     });
 
@@ -106,7 +107,7 @@ export function createCLI(
     .command("list")
     .description("List all cached libraries")
     .action(async () => {
-      await cacheList(libraryRepository);
+      await cacheList(queryBus);
     });
 
   cache
@@ -114,7 +115,7 @@ export function createCLI(
     .description("Show details of a cached library")
     .argument("<folder>", "Path to the music folder")
     .action(async (folder: string) => {
-      await cacheShow(libraryRepository, folder);
+      await cacheShow(queryBus, folder);
     });
 
   cache
@@ -122,7 +123,7 @@ export function createCLI(
     .description("Delete cached library (all or specific folder)")
     .argument("[folder]", "Path to the music folder (omit to purge all)")
     .action(async (folder?: string) => {
-      await cachePurge(libraryRepository, folder);
+      await cachePurge(commandBus, folder);
     });
 
   program

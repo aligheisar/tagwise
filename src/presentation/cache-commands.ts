@@ -1,51 +1,48 @@
-import type { CacheLibraryRepository } from "@/infrastructure/cache/library-repository";
-import { normalizeRoot } from "@/infrastructure/cache/library-repository";
+import { ListCachesQuery } from "@/application/manage-cache/list/query";
+import { PurgeCacheCommand } from "@/application/manage-cache/purge/command";
+import { ShowCacheQuery } from "@/application/manage-cache/show/query";
+import type { CommandBus } from "@/domain/shared/command-bus";
+import type { QueryBus } from "@/domain/shared/query-bus";
+import type { CacheListResult, CacheShowResult } from "@/domain/shared/result";
 
-export async function cacheList(repository: CacheLibraryRepository) {
-  const roots = await repository.listRoots();
+export async function cacheList(queryBus: QueryBus) {
+  const result = await queryBus.execute<ListCachesQuery, CacheListResult>(
+    new ListCachesQuery(),
+  );
 
-  if (roots.length === 0) {
+  if (result.total === 0) {
     console.log("No cached libraries.");
     return;
   }
 
-  console.log(`Cached libraries (${roots.length}):\n`);
+  console.log(`Cached libraries (${result.total}):\n`);
 
-  for (const root of roots) {
-    const library = await repository.load(root);
-    if (!library) continue;
-
-    const itemCount = library.items.length;
-    const okCount = library.items.filter((i) => i.status === "ok").length;
-    const errorCount = itemCount - okCount;
-
-    console.log(`  ${root}`);
+  for (const lib of result.libraries) {
+    console.log(`  ${lib.root}`);
     console.log(
-      `    ${itemCount} file(s) (${okCount} ok, ${errorCount} errors)`,
+      `    ${lib.itemCount} file(s) (${lib.okCount} ok, ${lib.errorCount} errors)`,
     );
-    console.log(`    cached at: ${library.cachedAt.toISOString()}`);
+    console.log(`    cached at: ${lib.cachedAt.toISOString()}`);
     console.log();
   }
 }
 
-export async function cacheShow(
-  repository: CacheLibraryRepository,
-  folder: string,
-) {
-  const root = normalizeRoot(folder);
-  const library = await repository.load(root);
+export async function cacheShow(queryBus: QueryBus, folder: string) {
+  const result = await queryBus.execute<ShowCacheQuery, CacheShowResult>(
+    new ShowCacheQuery(folder),
+  );
 
-  if (!library) {
-    console.error(`No cache found for: ${root}`);
+  if (!result) {
+    console.error(`No cache found for: ${folder}`);
     process.exit(1);
   }
 
-  const okItems = library.items.filter((i) => i.status === "ok");
-  const errorItems = library.items.filter((i) => i.status === "error");
+  const okItems = result.items.filter((i) => i.status === "ok");
+  const errorItems = result.items.filter((i) => i.status === "error");
 
-  console.log(`Root:       ${library.root}`);
-  console.log(`Cached at:  ${library.cachedAt.toISOString()}`);
-  console.log(`Total:      ${library.items.length} file(s)`);
+  console.log(`Root:       ${result.root}`);
+  console.log(`Cached at:  ${result.cachedAt.toISOString()}`);
+  console.log(`Total:      ${result.items.length} file(s)`);
   console.log(`OK:         ${okItems.length}`);
   console.log(`Errors:     ${errorItems.length}`);
 
@@ -57,31 +54,12 @@ export async function cacheShow(
   }
 }
 
-export async function cachePurge(
-  repository: CacheLibraryRepository,
-  folder?: string,
-) {
+export async function cachePurge(commandBus: CommandBus, folder?: string) {
+  await commandBus.execute(new PurgeCacheCommand(folder));
+
   if (folder) {
-    const root = normalizeRoot(folder);
-    const existed = await repository.exists(root);
-    await repository.delete(root);
-    if (existed) {
-      console.log(`Purged cache for: ${root}`);
-    } else {
-      console.log(`No cache found for: ${root}`);
-    }
-    return;
+    console.log(`Purged cache for: ${folder}`);
+  } else {
+    console.log("Purged all cached libraries.");
   }
-
-  const roots = await repository.listRoots();
-  if (roots.length === 0) {
-    console.log("No cached libraries to purge.");
-    return;
-  }
-
-  for (const root of roots) {
-    await repository.delete(root);
-    console.log(`Purged: ${root}`);
-  }
-  console.log(`\nPurged ${roots.length} cached library(ies).`);
 }
