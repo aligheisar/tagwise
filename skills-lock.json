@@ -7,6 +7,12 @@
       "skillPath": "skills/clean-ddd-hexagonal/SKILL.md",
       "computedHash": "223df951adb9adf655b139221d4a3b68a314f5a0c24c8bc137a754ce9dee5713"
     },
+    "cqrs-implementation": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/backend-development/skills/cqrs-implementation/SKILL.md",
+      "computedHash": "a03ac44d1fdf9f58d5516cd0609cb80f8cd4c06182fb3704710872afb5f84e6d"
+    },
     "opentui": {
       "source": "msmps/opentui-skill",
       "sourceType": "github",

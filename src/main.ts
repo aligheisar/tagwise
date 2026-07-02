@@ -1,4 +1,11 @@
 import { InMemoryCommandBus } from "@/application/buses/in-memory-command-bus";
+import { InMemoryQueryBus } from "@/application/buses/in-memory-query-bus";
+import { ListCachesHandler } from "@/application/manage-cache/list/handler";
+import { ListCachesQuery } from "@/application/manage-cache/list/query";
+import { PurgeCacheCommand } from "@/application/manage-cache/purge/command";
+import { PurgeCacheHandler } from "@/application/manage-cache/purge/handler";
+import { ShowCacheHandler } from "@/application/manage-cache/show/handler";
+import { ShowCacheQuery } from "@/application/manage-cache/show/query";
 import { RunCommand } from "@/application/run/command";
 import { RunHandler } from "@/application/run/handler";
 import { ScanLibraryCommand } from "@/application/scan-library/command";
@@ -23,6 +30,8 @@ const producers = new Map([
 ]);
 
 const commandBus = new InMemoryCommandBus();
+const queryBus = new InMemoryQueryBus();
+
 commandBus.register(
   ScanLibraryCommand,
   new ScanLibraryHandler(scanner, libraryRepository, filesystem),
@@ -31,6 +40,13 @@ commandBus.register(
   RunCommand,
   new RunHandler(libraryRepository, producers, filesystem, tagWriter),
 );
+commandBus.register(
+  PurgeCacheCommand,
+  new PurgeCacheHandler(libraryRepository),
+);
+
+queryBus.register(ListCachesQuery, new ListCachesHandler(libraryRepository));
+queryBus.register(ShowCacheQuery, new ShowCacheHandler(libraryRepository));
 
 const args = process.argv.slice(2);
 const hasSubcommand = [
@@ -80,8 +96,8 @@ if (!hasSubcommand) {
       tagWriter,
     });
   } else {
-    createCLI(commandBus, [...producers.keys()], libraryRepository).parse();
+    createCLI(commandBus, queryBus, [...producers.keys()]).parse();
   }
 } else {
-  createCLI(commandBus, [...producers.keys()], libraryRepository).parse();
+  createCLI(commandBus, queryBus, [...producers.keys()]).parse();
 }
