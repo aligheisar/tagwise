@@ -5,6 +5,7 @@ import type { LibraryRepository } from "@/domain/media-item/repository";
 import type { Producer } from "@/domain/producer/entity";
 import type { CommandBus } from "@/domain/shared/command-bus";
 import type { FilesystemPort, TagWriterPort } from "@/domain/shared/ports";
+import { Providers } from "@/presentation/tui/context/providers";
 
 type LaunchTUIOptions = {
   commandBus: CommandBus;
@@ -20,14 +21,16 @@ export async function launchTUI(options: LaunchTUIOptions) {
   const renderer = await createCliRenderer({ exitOnCtrlC: false });
 
   createRoot(renderer).render(
-    <App
-      commandBus={options.commandBus}
-      filesystem={options.filesystem}
-      initialFolder={options.initialFolder}
-      libraryRepository={options.libraryRepository}
-      producerNames={options.producerNames}
-      producers={options.producers}
-      tagWriter={options.tagWriter}
-    />,
+    <Providers>
+      <App
+        commandBus={options.commandBus}
+        filesystem={options.filesystem}
+        initialFolder={options.initialFolder}
+        libraryRepository={options.libraryRepository}
+        producerNames={options.producerNames}
+        producers={options.producers}
+        tagWriter={options.tagWriter}
+      />
+    </Providers>,
   );
 }
