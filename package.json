@@ -6,7 +6,7 @@
   "scripts": {
     "check": "biome check",
     "check:fix": "biome check --fix",
-    "dev": "bun run src/main.ts",
+    "dev": "bun run --watch src/main.ts",
     "format": "biome format --write",
     "prepare": "husky"
   },
