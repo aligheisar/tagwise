@@ -79,4 +79,17 @@ type Library = {
   cachedAt: Date;
 };
 
-export type { AudioProperties, Library, MediaItem, MediaTags, ScanResult };
+type ScanOptions = {
+  recursive?: boolean;
+  continueOnError?: boolean;
+  signal?: AbortSignal;
+};
+
+export type {
+  AudioProperties,
+  Library,
+  MediaItem,
+  MediaTags,
+  ScanOptions,
+  ScanResult,
+};

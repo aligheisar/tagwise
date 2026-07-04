@@ -1,0 +1,64 @@
+import type {
+  CacheListResult,
+  CacheShowResult,
+  LibraryRepository,
+} from "@/repositories/library.repository";
+import { normalizeRoot } from "@/repositories/library.repository";
+
+export class CacheService {
+  constructor(private readonly libraryRepository: LibraryRepository) {}
+
+  async list(): Promise<CacheListResult> {
+    const roots = await this.libraryRepository.listRoots();
+    const summaries: CacheListResult["libraries"] = [];
+
+    for (const root of roots) {
+      const library = await this.libraryRepository.load(root);
+      if (!library) continue;
+
+      const itemCount = library.items.length;
+      const okCount = library.items.filter((i) => i.status === "ok").length;
+      const errorCount = itemCount - okCount;
+
+      summaries.push({
+        cachedAt: library.cachedAt,
+        errorCount,
+        itemCount,
+        okCount,
+        root,
+      });
+    }
+
+    return { libraries: summaries, total: summaries.length };
+  }
+
+  async show(folder: string): Promise<CacheShowResult> {
+    const root = normalizeRoot(folder);
+    const library = await this.libraryRepository.load(root);
+
+    if (!library) return null;
+
+    return {
+      cachedAt: library.cachedAt,
+      items: library.items.map((i) => ({
+        error: i.status === "error" ? i.error : undefined,
+        path: i.path,
+        status: i.status,
+      })),
+      root: library.root,
+    };
+  }
+
+  async purge(folder?: string): Promise<void> {
+    if (folder) {
+      const root = normalizeRoot(folder);
+      await this.libraryRepository.delete(root);
+      return;
+    }
+
+    const roots = await this.libraryRepository.listRoots();
+    for (const root of roots) {
+      await this.libraryRepository.delete(root);
+    }
+  }
+}

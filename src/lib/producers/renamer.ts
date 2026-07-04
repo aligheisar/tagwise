@@ -1,8 +1,7 @@
 import path from "node:path";
 import sanitize from "sanitize-filename";
-import type { Library } from "@/domain/media-item/entity";
-import type { Operation } from "@/domain/operation/entity";
-import type { Producer } from "@/domain/producer/entity";
+import type { Library } from "../taglib/types";
+import type { Operation, Producer } from "./types";
 
 export class RenamerProducer implements Producer {
   produce(library: Library): Promise<Operation[]> {

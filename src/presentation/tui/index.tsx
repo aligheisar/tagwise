@@ -1,19 +1,20 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
 import { App } from "#/app";
-import type { LibraryRepository } from "@/domain/media-item/repository";
-import type { Producer } from "@/domain/producer/entity";
-import type { CommandBus } from "@/domain/shared/command-bus";
-import type { FilesystemPort, TagWriterPort } from "@/domain/shared/ports";
+import type { Producer } from "@/lib/producers/types";
 import { Providers } from "@/presentation/tui/context/providers";
+import type { LibraryRepository } from "@/repositories/library.repository";
+import type { FilesystemService } from "@/services/filesystem.service";
+import type { ScannerService } from "@/services/scanner.service";
+import type { TagWriterService } from "@/services/tag-writer.service";
 
 type LaunchTUIOptions = {
-  commandBus: CommandBus;
+  scannerService: ScannerService;
   producerNames: string[];
   producers: Map<string, Producer>;
   libraryRepository: LibraryRepository;
-  filesystem: FilesystemPort;
-  tagWriter: TagWriterPort;
+  filesystem: FilesystemService;
+  tagWriter: TagWriterService;
   initialFolder?: string;
 };
 
@@ -23,12 +24,12 @@ export async function launchTUI(options: LaunchTUIOptions) {
   createRoot(renderer).render(
     <Providers>
       <App
-        commandBus={options.commandBus}
         filesystem={options.filesystem}
         initialFolder={options.initialFolder}
         libraryRepository={options.libraryRepository}
         producerNames={options.producerNames}
         producers={options.producers}
+        scannerService={options.scannerService}
         tagWriter={options.tagWriter}
       />
     </Providers>,

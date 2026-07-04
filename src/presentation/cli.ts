@@ -1,13 +1,7 @@
 import { Command } from "commander";
-import { RunCommand } from "@/application/run/command";
-import { ScanLibraryCommand } from "@/application/scan-library/command";
-import type { CommandBus } from "@/domain/shared/command-bus";
-import type { QueryBus } from "@/domain/shared/query-bus";
-import {
-  cacheList,
-  cachePurge,
-  cacheShow,
-} from "@/presentation/cache-commands";
+import type { CacheService } from "@/services/cache.service";
+import type { RunService } from "@/services/run.service";
+import type { ScannerService } from "@/services/scanner.service";
 
 const COMPLETION_SCRIPT = `#!/bin/bash
 _tagwise_completions() {
@@ -61,9 +55,65 @@ _tagwise_complete_folders() {
 complete -F _tagwise_completions tagwise
 `;
 
+async function cacheList(cacheService: CacheService) {
+  const result = await cacheService.list();
+
+  if (result.total === 0) {
+    console.log("No cached libraries.");
+    return;
+  }
+
+  console.log(`Cached libraries (${result.total}):\n`);
+
+  for (const lib of result.libraries) {
+    console.log(`  ${lib.root}`);
+    console.log(
+      `    ${lib.itemCount} file(s) (${lib.okCount} ok, ${lib.errorCount} errors)`,
+    );
+    console.log(`    cached at: ${lib.cachedAt.toISOString()}`);
+    console.log();
+  }
+}
+
+async function cacheShow(cacheService: CacheService, folder: string) {
+  const result = await cacheService.show(folder);
+
+  if (!result) {
+    console.error(`No cache found for: ${folder}`);
+    process.exit(1);
+  }
+
+  const okItems = result.items.filter((i) => i.status === "ok");
+  const errorItems = result.items.filter((i) => i.status === "error");
+
+  console.log(`Root:       ${result.root}`);
+  console.log(`Cached at:  ${result.cachedAt.toISOString()}`);
+  console.log(`Total:      ${result.items.length} file(s)`);
+  console.log(`OK:         ${okItems.length}`);
+  console.log(`Errors:     ${errorItems.length}`);
+
+  if (errorItems.length > 0) {
+    console.log("\nErrors:");
+    for (const item of errorItems) {
+      console.log(`  ${item.path}: ${item.error}`);
+    }
+  }
+}
+
+async function cachePurge(cacheService: CacheService, folder?: string) {
+  await cacheService.purge(folder);
+
+  if (folder) {
+    console.log(`Purged cache for: ${folder}`);
+  } else {
+    console.log("Purged all cached libraries.");
+  }
+}
+
 export function createCLI(
-  commandBus: CommandBus,
-  queryBus: QueryBus,
+  scannerService: ScannerService,
+  runService: RunService,
+  cacheService: CacheService,
   producerNames: string[],
 ): Command {
   const program = new Command();
@@ -77,7 +127,7 @@ export function createCLI(
     .description("Scan a folder and cache the library")
     .argument("<folder>", "Path to the music folder")
     .action(async (folder: string) => {
-      await commandBus.execute(new ScanLibraryCommand(folder));
+      await scannerService.scan(folder);
     });
 
   program
@@ -97,8 +147,8 @@ export function createCLI(
     )
     .argument("<folder>", "Path to the music folder")
     .action(async (producer: string, folder: string) => {
-      await commandBus.execute(new ScanLibraryCommand(folder));
-      await commandBus.execute(new RunCommand(producer, folder));
+      await scannerService.scan(folder);
+      await runService.run(producer, folder);
     });
 
   const cache = program.command("cache").description("Manage cached libraries");
@@ -107,7 +157,7 @@ export function createCLI(
     .command("list")
     .description("List all cached libraries")
     .action(async () => {
-      await cacheList(queryBus);
+      await cacheList(cacheService);
     });
 
   cache
@@ -115,7 +165,7 @@ export function createCLI(
     .description("Show details of a cached library")
     .argument("<folder>", "Path to the music folder")
     .action(async (folder: string) => {
-      await cacheShow(queryBus, folder);
+      await cacheShow(cacheService, folder);
     });
 
   cache
@@ -123,7 +173,7 @@ export function createCLI(
     .description("Delete cached library (all or specific folder)")
     .argument("[folder]", "Path to the music folder (omit to purge all)")
     .action(async (folder?: string) => {
-      await cachePurge(commandBus, folder);
+      await cachePurge(cacheService, folder);
     });
 
   program

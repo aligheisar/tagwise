@@ -8,8 +8,32 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { Library } from "@/domain/media-item/entity";
-import type { LibraryRepository } from "@/domain/media-item/repository";
+import type { Library } from "@/lib/taglib/types";
+
+type CachedLibrarySummary = {
+  root: string;
+  itemCount: number;
+  okCount: number;
+  errorCount: number;
+  cachedAt: Date;
+};
+
+type CachedLibraryDetail = {
+  root: string;
+  cachedAt: Date;
+  items: Array<{
+    path: string;
+    status: "ok" | "error";
+    error?: string;
+  }>;
+};
+
+type CacheListResult = {
+  libraries: CachedLibrarySummary[];
+  total: number;
+};
+
+type CacheShowResult = CachedLibraryDetail | null;
 
 function normalizeRoot(root: string): string {
   return path.resolve(root);
@@ -26,7 +50,7 @@ function filenameToRoot(filename: string): string {
   return `/${filename.replaceAll("__", "/").replaceAll("_", ".")}`;
 }
 
-class CacheLibraryRepository implements LibraryRepository {
+class LibraryRepository {
   private readonly cacheDir =
     process.env.XDG_CACHE_HOME ?? path.join(os.homedir(), ".cache");
   private readonly librariesDir = path.join(
@@ -39,7 +63,7 @@ class CacheLibraryRepository implements LibraryRepository {
     return path.join(this.librariesDir, `${rootToFilename(root)}.json`);
   }
 
-  async save(library: Library) {
+  async save(library: Library): Promise<void> {
     await mkdir(this.librariesDir, { recursive: true });
 
     const normalizedRoot = normalizeRoot(library.root);
@@ -52,7 +76,7 @@ class CacheLibraryRepository implements LibraryRepository {
     );
   }
 
-  async load(root: string) {
+  async load(root: string): Promise<Library | null> {
     try {
       const json = await readFile(this.fileForRoot(root), "utf8");
       const data = JSON.parse(json) as Library;
@@ -64,7 +88,7 @@ class CacheLibraryRepository implements LibraryRepository {
     }
   }
 
-  async exists(root: string) {
+  async exists(root: string): Promise<boolean> {
     try {
       await stat(this.fileForRoot(root));
       return true;
@@ -73,7 +97,7 @@ class CacheLibraryRepository implements LibraryRepository {
     }
   }
 
-  async delete(root: string) {
+  async delete(root: string): Promise<void> {
     await rm(this.fileForRoot(root), { force: true });
   }
 
@@ -89,4 +113,10 @@ class CacheLibraryRepository implements LibraryRepository {
   }
 }
 
-export { CacheLibraryRepository, normalizeRoot };
+export type {
+  CachedLibraryDetail,
+  CachedLibrarySummary,
+  CacheListResult,
+  CacheShowResult,
+};
+export { LibraryRepository, normalizeRoot };

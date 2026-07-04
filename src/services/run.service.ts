@@ -1,24 +1,22 @@
-import type { LibraryRepository } from "@/domain/media-item/repository";
-import type { Operation } from "@/domain/operation/entity";
-import type { Producer } from "@/domain/producer/entity";
-import type { CommandHandler } from "@/domain/shared/command-handler";
-import type { FilesystemPort, TagWriterPort } from "@/domain/shared/ports";
-import { normalizeRoot } from "@/infrastructure/cache/library-repository";
-import type { RunCommand } from "./command";
+import type { Operation, Producer } from "@/lib/producers/types";
+import type { LibraryRepository } from "@/repositories/library.repository";
+import { normalizeRoot } from "@/repositories/library.repository";
+import type { FilesystemService } from "./filesystem.service";
+import type { TagWriterService } from "./tag-writer.service";
 
 type ProducerRegistry = Map<string, Producer>;
 
-export class RunHandler implements CommandHandler<RunCommand> {
+class RunService {
   constructor(
     private readonly libraryRepository: LibraryRepository,
+    private readonly filesystem: FilesystemService,
     private readonly producers: ProducerRegistry,
-    private readonly filesystem: FilesystemPort,
-    private readonly tagWriter: TagWriterPort,
+    private readonly tagWriter: TagWriterService,
   ) {}
 
-  async execute(command: RunCommand) {
-    const root = normalizeRoot(command.root);
-    const library = await this.libraryRepository.load(root);
+  async run(producerName: string, root: string): Promise<void> {
+    const normalizedRoot = normalizeRoot(root);
+    const library = await this.libraryRepository.load(normalizedRoot);
     if (!library) {
       console.error(
         "No cached library found. Run 'tagwise scan <folder>' first.",
@@ -26,9 +24,9 @@ export class RunHandler implements CommandHandler<RunCommand> {
       return;
     }
 
-    const producer = this.producers.get(command.producerName);
+    const producer = this.producers.get(producerName);
     if (!producer) {
-      console.error(`Unknown producer: ${command.producerName}`);
+      console.error(`Unknown producer: ${producerName}`);
       return;
     }
 
@@ -46,7 +44,7 @@ export class RunHandler implements CommandHandler<RunCommand> {
     }
   }
 
-  private async executeOperation(operation: Operation) {
+  private async executeOperation(operation: Operation): Promise<void> {
     switch (operation.type) {
       case "rename":
         console.log(`  rename: ${operation.oldPath} -> ${operation.newPath}`);
@@ -61,3 +59,5 @@ export class RunHandler implements CommandHandler<RunCommand> {
     }
   }
 }
+
+export { RunService };

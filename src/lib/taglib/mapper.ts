@@ -1,5 +1,5 @@
 import type { FolderScanItem, FolderScanResult } from "taglib-wasm/folder";
-import type { MediaItem, ScanResult } from "@/domain/media-item/entity";
+import type { MediaItem, ScanResult } from "./types";
 
 function mapScanResult(result: FolderScanResult): ScanResult {
   return {
