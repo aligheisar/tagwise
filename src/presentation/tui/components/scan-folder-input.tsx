@@ -76,6 +76,7 @@ const ScanFolderInput = ({
         case "escape":
           if (suggestionIndex >= 0) {
             setSuggestionIndex(-1);
+            setSuggestions([]);
             return;
           }
 
@@ -111,7 +112,6 @@ const ScanFolderInput = ({
 
             if (selected) {
               setInputValue(selected);
-              onScan(selected);
             }
           } else {
             const fn = async () => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Operation } from "@/domain/operation/entity";
+import type { Operation } from "@/lib/producers/types";
 
 type OperationStatus = "accepted" | "rejected" | "modified";
 

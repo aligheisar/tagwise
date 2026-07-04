@@ -5,13 +5,12 @@ import { ProducerSelect } from "#/screens/producer-select";
 import { ReviewScreen } from "#/screens/review";
 import { ScanningScreen } from "#/screens/scanning";
 import { WelcomeScreen } from "#/screens/welcome";
-import { ScanLibraryCommand } from "@/application/scan-library/command";
-import type { LibraryRepository } from "@/domain/media-item/repository";
-import type { Operation } from "@/domain/operation/entity";
-import type { Producer } from "@/domain/producer/entity";
-import type { CommandBus } from "@/domain/shared/command-bus";
-import type { FilesystemPort, TagWriterPort } from "@/domain/shared/ports";
-import { normalizeRoot } from "@/infrastructure/cache/library-repository";
+import type { Operation, Producer } from "@/lib/producers/types";
+import type { LibraryRepository } from "@/repositories/library.repository";
+import { normalizeRoot } from "@/repositories/library.repository";
+import type { FilesystemService } from "@/services/filesystem.service";
+import type { ScannerService } from "@/services/scanner.service";
+import type { TagWriterService } from "@/services/tag-writer.service";
 
 const PRODUCER_DESCRIPTIONS: Record<string, string> = {
   remix: 'Append "(Remix)" to title tags',
@@ -19,12 +18,12 @@ const PRODUCER_DESCRIPTIONS: Record<string, string> = {
 };
 
 type AppProps = {
-  commandBus: CommandBus;
+  scannerService: ScannerService;
   producerNames: string[];
   producers: Map<string, Producer>;
   libraryRepository: LibraryRepository;
-  filesystem: FilesystemPort;
-  tagWriter: TagWriterPort;
+  filesystem: FilesystemService;
+  tagWriter: TagWriterService;
   initialFolder?: string;
 };
 
@@ -36,7 +35,7 @@ type Screen =
   | { type: "apply"; folder: string; operations: Operation[] };
 
 export function App({
-  commandBus,
+  scannerService,
   producerNames,
   producers,
   libraryRepository,
@@ -58,10 +57,8 @@ export function App({
   );
 
   const loadCachedLibraries = useCallback(async () => {
-    if ("listRoots" in libraryRepository) {
-      const roots = await libraryRepository.listRoots();
-      setCachedLibraries(roots);
-    }
+    const roots = await libraryRepository.listRoots();
+    setCachedLibraries(roots);
   }, [libraryRepository]);
 
   useEffect(() => {
@@ -71,16 +68,14 @@ export function App({
   const handleScan = useCallback(
     async (folder: string) => {
       setScanError(null);
-      await commandBus.execute(
-        new ScanLibraryCommand(folder, { signal: controller.current.signal }),
-      );
+      await scannerService.scan(folder, { signal: controller.current.signal });
       const library = await libraryRepository.load(normalizeRoot(folder));
       if (!library) {
         throw new Error("Scan completed but library not found in cache");
       }
       setScreen({ folder, type: "producer-select" });
     },
-    [commandBus, libraryRepository],
+    [scannerService, libraryRepository],
   );
 
   const handleSelectCached = useCallback(

@@ -1,14 +1,13 @@
 import { existsSync } from "node:fs";
 import { readdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
-import type { FilesystemPort } from "@/domain/shared/ports";
 
-export class NodeFilesystem implements FilesystemPort {
-  async rename(oldPath: string, newPath: string) {
+class FilesystemService {
+  async rename(oldPath: string, newPath: string): Promise<void> {
     await rename(oldPath, newPath);
   }
 
-  async exists(filePath: string) {
+  async exists(filePath: string): Promise<boolean> {
     return existsSync(filePath);
   }
 
@@ -16,7 +15,6 @@ export class NodeFilesystem implements FilesystemPort {
     const visited = new Set<string>();
 
     async function walk(current: string): Promise<boolean> {
-      // Prevent infinite loops with circular symlinks
       if (visited.has(current)) return false;
       visited.add(current);
 
@@ -31,7 +29,6 @@ export class NodeFilesystem implements FilesystemPort {
           } catch (_err) {}
         }
       } catch (_err) {
-        // Skip directories we can't read
         return false;
       }
 
@@ -41,3 +38,5 @@ export class NodeFilesystem implements FilesystemPort {
     return walk(dir);
   }
 }
+
+export { FilesystemService };

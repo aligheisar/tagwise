@@ -24,7 +24,7 @@ export function WelcomeScreen({
   useKeyboard((key) => {
     switch (key.name) {
       case "q":
-        renderer.destroy();
+        if (focusMode !== "input") renderer.destroy();
         break;
       case "tab":
         setFocusMode("input");
@@ -46,6 +46,7 @@ export function WelcomeScreen({
         );
         break;
       case "return": {
+        if (focusMode !== "cached") return;
         if (cachedLibraries.length > 0) {
           const selected = cachedLibraries[selectedIndex];
           if (selected) onSelectCached(selected);

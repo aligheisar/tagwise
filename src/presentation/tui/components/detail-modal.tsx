@@ -1,6 +1,6 @@
 import { useKeyboard } from "@opentui/react";
 import type { OperationState } from "#/hooks/use-operations";
-import type { Operation } from "@/domain/operation/entity";
+import type { Operation } from "@/lib/producers/types";
 
 type DetailModalProps = {
   operation: OperationState;
