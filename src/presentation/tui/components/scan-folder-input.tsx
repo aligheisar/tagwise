@@ -8,10 +8,6 @@ import {
   useState,
 } from "react";
 
-async function isExist(input: string) {
-  return exists(input);
-}
-
 async function getSuggestions(input: string): Promise<string[]> {
   if (!input.trim()) return [];
 
@@ -64,10 +60,9 @@ const ScanFolderInput = ({
     const suggestionsResult = await getSuggestions(value);
     setSuggestions(suggestionsResult);
 
-    const isDirExist = await isExist(value.trim());
-    if (isDirExist) return;
-
-    setSuggestionIndex(0);
+    if (suggestionsResult.length > 0) {
+      setSuggestionIndex(0);
+    }
   }, []);
 
   useKeyboard((key) => {
@@ -107,20 +102,12 @@ const ScanFolderInput = ({
         }
 
         case "return": {
-          if (suggestionIndex >= 0 && suggestionIndex < suggestions.length) {
-            const selected = suggestions[suggestionIndex];
+          const fn = async () => {
+            const isExist = await exists(inputValue.trim());
+            if (isExist) onScan(inputValue.trim());
+          };
 
-            if (selected) {
-              setInputValue(selected);
-            }
-          } else {
-            const fn = async () => {
-              const isExist = await exists(inputValue.trim());
-              if (isExist) onScan(inputValue.trim());
-            };
-
-            fn();
-          }
+          fn();
           break;
         }
       }
