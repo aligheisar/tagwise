@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { filesystemService } from "@/containers/filesystem.container";
+import { tagWriterService } from "@/containers/tag-writer.container";
 import type { Operation } from "@/lib/producers/types";
 
 type OperationStatus = "accepted" | "rejected" | "modified";
@@ -58,15 +60,7 @@ function getOperationFilename(op: Operation): string {
   return op.path.split("/").pop() ?? "";
 }
 
-export function useOperations(
-  rawOperations: Operation[],
-  filesystem: { rename: (old: string, newPath: string) => Promise<void> },
-  tagWriter: {
-    updateTags: (
-      updates: { path: string; tags: Record<string, string | number> }[],
-    ) => Promise<void>;
-  },
-): UseOperationsReturn {
+export function useOperations(rawOperations: Operation[]): UseOperationsReturn {
   const [operations, setOperations] = useState<OperationState[]>(() =>
     rawOperations.map((op, i) => ({
       id: `${op.type}-${i}`,
@@ -196,7 +190,7 @@ export function useOperations(
 
     for (const r of renames) {
       try {
-        await filesystem.rename(r.old, r.new);
+        await filesystemService.rename(r.old, r.new);
         success++;
       } catch {
         failed++;
@@ -205,7 +199,7 @@ export function useOperations(
 
     if (tagUpdates.length > 0) {
       try {
-        await tagWriter.updateTags(tagUpdates);
+        await tagWriterService.updateTags(tagUpdates);
         success += tagUpdates.length;
       } catch {
         failed += tagUpdates.length;
@@ -213,7 +207,7 @@ export function useOperations(
     }
 
     return { failed, success };
-  }, [operations, filesystem, tagWriter]);
+  }, [operations]);
 
   const stats = useMemo(() => {
     const total = operations.length;

@@ -1,4 +1,4 @@
-import type { Library } from "../taglib/types";
+import type { Library } from "@/types/library";
 
 type Operation =
   | { type: "rename"; oldPath: string; newPath: string }

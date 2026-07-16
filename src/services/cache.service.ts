@@ -4,6 +4,7 @@ import type {
   LibraryRepository,
 } from "@/repositories/library.repository";
 import { normalizeRoot } from "@/repositories/library.repository";
+import type { Library } from "@/types/library";
 
 export class CacheService {
   constructor(private readonly libraryRepository: LibraryRepository) {}
@@ -32,6 +33,12 @@ export class CacheService {
     return { libraries: summaries, total: summaries.length };
   }
 
+  async get(root: string): Promise<Library | null> {
+    const lib = await this.libraryRepository.load(root);
+
+    return lib;
+  }
+
   async show(folder: string): Promise<CacheShowResult> {
     const root = normalizeRoot(folder);
     const library = await this.libraryRepository.load(root);
@@ -41,7 +48,7 @@ export class CacheService {
     return {
       cachedAt: library.cachedAt,
       items: library.items.map((i) => ({
-        error: i.status === "error" ? i.error : undefined,
+        error: i.status === "error" ? i.error.message : undefined,
         path: i.path,
         status: i.status,
       })),

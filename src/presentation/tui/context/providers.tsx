@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
+import { LibrariesProvider } from "#/context/libraries-provider";
 
 const Providers = ({ children }: { children: ReactNode }) => {
-  return <>{children}</>;
+  return <LibrariesProvider>{children}</LibrariesProvider>;
 };
 
 export { Providers };

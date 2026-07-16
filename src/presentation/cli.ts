@@ -1,7 +1,8 @@
 import { Command } from "commander";
+import { cacheService } from "@/containers/cache.container";
+import { runService } from "@/containers/run.container";
+import { scannerService } from "@/containers/scanner.container";
 import type { CacheService } from "@/services/cache.service";
-import type { RunService } from "@/services/run.service";
-import type { ScannerService } from "@/services/scanner.service";
 
 const COMPLETION_SCRIPT = `#!/bin/bash
 _tagwise_completions() {
@@ -110,12 +111,7 @@ async function cachePurge(cacheService: CacheService, folder?: string) {
   }
 }
 
-export function createCLI(
-  scannerService: ScannerService,
-  runService: RunService,
-  cacheService: CacheService,
-  producerNames: string[],
-): Command {
+export function createCLI(): Command {
   const program = new Command();
   program
     .name("tagwise")
@@ -133,18 +129,7 @@ export function createCLI(
   program
     .command("run")
     .description("Run a producer on a cached library")
-    .argument(
-      "<producer>",
-      `Producer to run (${producerNames.join(", ")})`,
-      (value) => {
-        if (!producerNames.includes(value)) {
-          throw new Error(
-            `Unknown producer: ${value}. Available: ${producerNames.join(", ")}`,
-          );
-        }
-        return value;
-      },
-    )
+    .argument("<producer>")
     .argument("<folder>", "Path to the music folder")
     .action(async (producer: string, folder: string) => {
       await scannerService.scan(folder);

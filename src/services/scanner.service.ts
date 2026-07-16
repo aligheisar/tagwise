@@ -1,6 +1,5 @@
-import { scanFolder } from "taglib-wasm/folder";
-import { mapScanResult } from "@/lib/taglib/mapper";
-import type { ScanOptions } from "@/lib/taglib/types";
+import { type FolderScanOptions, scanFolder } from "taglib-wasm/folder";
+
 import {
   type LibraryRepository,
   normalizeRoot,
@@ -13,7 +12,7 @@ class ScannerService {
     private readonly filesystem: FilesystemService,
   ) {}
 
-  async scan(root: string, options?: ScanOptions): Promise<void> {
+  async scan(root: string, options?: FolderScanOptions): Promise<void> {
     const normalizedRoot = normalizeRoot(root);
     const cachedLibrary = await this.libraryRepository.load(normalizedRoot);
 
@@ -34,11 +33,9 @@ class ScannerService {
       signal: options?.signal,
     });
 
-    const scanResult = mapScanResult(result);
-
     await this.libraryRepository.save({
       cachedAt: new Date(),
-      items: scanResult.items,
+      items: result.items,
       root: normalizedRoot,
     });
   }

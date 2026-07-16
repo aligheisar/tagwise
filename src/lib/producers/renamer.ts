@@ -1,6 +1,6 @@
 import path from "node:path";
 import sanitize from "sanitize-filename";
-import type { Library } from "../taglib/types";
+import type { Library } from "@/types/library";
 import type { Operation, Producer } from "./types";
 
 export class RenamerProducer implements Producer {
