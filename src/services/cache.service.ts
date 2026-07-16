@@ -1,10 +1,10 @@
-import type { Library } from "@/lib/taglib/types";
 import type {
   CacheListResult,
   CacheShowResult,
   LibraryRepository,
 } from "@/repositories/library.repository";
 import { normalizeRoot } from "@/repositories/library.repository";
+import type { Library } from "@/types/library";
 
 export class CacheService {
   constructor(private readonly libraryRepository: LibraryRepository) {}
@@ -48,7 +48,7 @@ export class CacheService {
     return {
       cachedAt: library.cachedAt,
       items: library.items.map((i) => ({
-        error: i.status === "error" ? i.error : undefined,
+        error: i.status === "error" ? i.error.message : undefined,
         path: i.path,
         status: i.status,
       })),
