@@ -1,21 +1,23 @@
+import { useLibraries } from "#/hooks/use-libraries";
+
 const CachedLibraries = ({
-  cachedLibraries,
   focusMode,
   selectedIndex,
 }: {
-  cachedLibraries: string[];
   focusMode: "cached" | "input";
   selectedIndex: number;
 }) => {
+  const { libraries } = useLibraries();
+
   return (
-    cachedLibraries.length > 0 && (
+    libraries.length > 0 && (
       <box flexDirection="column">
         <text>
           <span fg="#e0af68">{focusMode === "cached" ? "▸ " : "  "}</span>
           <span fg="#c0caf5">Cached Libraries:</span>
         </text>
-        {cachedLibraries.map((lib, i) => (
-          <box key={lib} paddingX={2}>
+        {libraries.map((lib, i) => (
+          <box key={lib.root} paddingX={2}>
             <text>
               <span
                 fg={
@@ -33,7 +35,7 @@ const CachedLibraries = ({
                     : "#a9b1d6"
                 }
               >
-                {lib}
+                {lib.root}
               </span>
             </text>
           </box>

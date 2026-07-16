@@ -1,3 +1,4 @@
+import type { Library } from "@/lib/taglib/types";
 import type {
   CacheListResult,
   CacheShowResult,
@@ -30,6 +31,12 @@ export class CacheService {
     }
 
     return { libraries: summaries, total: summaries.length };
+  }
+
+  async get(root: string): Promise<Library | null> {
+    const lib = await this.libraryRepository.load(root);
+
+    return lib;
   }
 
   async show(folder: string): Promise<CacheShowResult> {

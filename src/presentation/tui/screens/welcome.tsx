@@ -1,25 +1,20 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
-import { CachedLibraries } from "@/presentation/tui/components/cached-libraries";
-import { LogoBanner } from "@/presentation/tui/components/logo-banner";
-import { ScanFolderInput } from "@/presentation/tui/components/scan-folder-input";
+import { CachedLibraries } from "#/components/cached-libraries";
+import { LogoBanner } from "#/components/logo-banner";
+import { ScanFolderInput } from "#/components/scan-folder-input";
+import { useLibraries } from "#/hooks/use-libraries";
 
 type WelcomeScreenProps = {
-  cachedLibraries: string[];
   onSelectCached: (root: string) => void;
   onScan: (path: string) => void;
 };
 
-export function WelcomeScreen({
-  cachedLibraries,
-  onSelectCached,
-  onScan,
-}: WelcomeScreenProps) {
+export function WelcomeScreen({ onSelectCached, onScan }: WelcomeScreenProps) {
   const renderer = useRenderer();
+  const { libraries } = useLibraries();
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [focusMode, setFocusMode] = useState<"cached" | "input">(
-    cachedLibraries.length > 0 ? "cached" : "input",
-  );
+  const [focusMode, setFocusMode] = useState<"cached" | "input">("input");
 
   useKeyboard((key) => {
     switch (key.name) {
@@ -36,20 +31,16 @@ export function WelcomeScreen({
         setSelectedIndex((prev) => Math.max(0, prev - 1));
         break;
       case "down":
-        setSelectedIndex((prev) =>
-          Math.min(cachedLibraries.length - 1, prev + 1),
-        );
+        setSelectedIndex((prev) => Math.min(libraries.length - 1, prev + 1));
         break;
       case "j":
-        setSelectedIndex((prev) =>
-          Math.min(cachedLibraries.length - 1, prev + 1),
-        );
+        setSelectedIndex((prev) => Math.min(libraries.length - 1, prev + 1));
         break;
       case "return": {
         if (focusMode !== "cached") return;
-        if (cachedLibraries.length > 0) {
-          const selected = cachedLibraries[selectedIndex];
-          if (selected) onSelectCached(selected);
+        if (libraries.length > 0) {
+          const selected = libraries[selectedIndex];
+          if (selected) onSelectCached(selected.root);
         }
         break;
       }
@@ -65,11 +56,7 @@ export function WelcomeScreen({
     >
       <box flexDirection="column" gap={1} padding={1}>
         <LogoBanner />
-        <CachedLibraries
-          cachedLibraries={cachedLibraries}
-          focusMode={focusMode}
-          selectedIndex={selectedIndex}
-        />
+        <CachedLibraries focusMode={focusMode} selectedIndex={selectedIndex} />
         <ScanFolderInput
           focusMode={focusMode}
           onScan={onScan}

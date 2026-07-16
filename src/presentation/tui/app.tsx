@@ -1,16 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useOperations } from "#/hooks/use-operations";
 import { ApplyScreen } from "#/screens/apply";
 import { ProducerSelect } from "#/screens/producer-select";
 import { ReviewScreen } from "#/screens/review";
 import { ScanningScreen } from "#/screens/scanning";
 import { WelcomeScreen } from "#/screens/welcome";
-import type { Operation, Producer } from "@/lib/producers/types";
-import type { LibraryRepository } from "@/repositories/library.repository";
+import { cacheService } from "@/containers/cache.container";
+import { scannerService } from "@/containers/scanner.container";
+import type { Operation } from "@/lib/producers/types";
 import { normalizeRoot } from "@/repositories/library.repository";
-import type { FilesystemService } from "@/services/filesystem.service";
-import type { ScannerService } from "@/services/scanner.service";
-import type { TagWriterService } from "@/services/tag-writer.service";
 
 const PRODUCER_DESCRIPTIONS: Record<string, string> = {
   remix: 'Append "(Remix)" to title tags',
@@ -18,12 +16,6 @@ const PRODUCER_DESCRIPTIONS: Record<string, string> = {
 };
 
 type AppProps = {
-  scannerService: ScannerService;
-  producerNames: string[];
-  producers: Map<string, Producer>;
-  libraryRepository: LibraryRepository;
-  filesystem: FilesystemService;
-  tagWriter: TagWriterService;
   initialFolder?: string;
 };
 
@@ -34,16 +26,7 @@ type Screen =
   | { type: "review"; folder: string; operations: Operation[] }
   | { type: "apply"; folder: string; operations: Operation[] };
 
-export function App({
-  scannerService,
-  producerNames,
-  producers,
-  libraryRepository,
-  filesystem,
-  tagWriter,
-  initialFolder,
-}: AppProps) {
-  const [cachedLibraries, setCachedLibraries] = useState<string[]>([]);
+export function App({ initialFolder }: AppProps) {
   const [_scanError, setScanError] = useState<string | null>(null);
   const controller = useRef(new AbortController());
   const [screen, setScreen] = useState<Screen>(
@@ -56,67 +39,54 @@ export function App({
       : { type: "welcome" },
   );
 
-  const loadCachedLibraries = useCallback(async () => {
-    const roots = await libraryRepository.listRoots();
-    setCachedLibraries(roots);
-  }, [libraryRepository]);
+  const handleScan = useCallback(async (folder: string) => {
+    setScanError(null);
 
-  useEffect(() => {
-    loadCachedLibraries();
-  }, [loadCachedLibraries]);
+    await scannerService.scan(folder, { signal: controller.current.signal });
+    const library = await cacheService.get(normalizeRoot(folder));
+    if (!library) {
+      throw new Error("Scan completed but library not found in cache");
+    }
 
-  const handleScan = useCallback(
-    async (folder: string) => {
-      setScanError(null);
-      await scannerService.scan(folder, { signal: controller.current.signal });
-      const library = await libraryRepository.load(normalizeRoot(folder));
-      if (!library) {
-        throw new Error("Scan completed but library not found in cache");
-      }
-      setScreen({ folder, type: "producer-select" });
-    },
-    [scannerService, libraryRepository],
-  );
+    setScreen({ folder, type: "producer-select" });
+  }, []);
 
-  const handleSelectCached = useCallback(
-    async (root: string) => {
-      const library = await libraryRepository.load(normalizeRoot(root));
-      if (!library) {
-        setScanError("Cached library not found");
-        return;
-      }
-      setScreen({ folder: root, type: "producer-select" });
-    },
-    [libraryRepository],
-  );
+  const handleSelectCached = useCallback(async (root: string) => {
+    const library = await cacheService.get(normalizeRoot(root));
+    if (!library) {
+      setScanError("Cached library not found");
+      return;
+    }
+    setScreen({ folder: root, type: "producer-select" });
+  }, []);
 
   const handleProducerConfirm = useCallback(
     async (selectedProducers: string[], folder: string) => {
-      const library = await libraryRepository.load(normalizeRoot(folder));
+      const library = await cacheService.get(normalizeRoot(folder));
       if (!library) {
         setScanError("Library not found in cache");
         setScreen({ type: "welcome" });
         return;
       }
 
-      const allOperations: Operation[] = [];
-      for (const name of selectedProducers) {
-        const producer = producers.get(name);
-        if (producer) {
-          const ops = await producer.produce(library);
-          allOperations.push(...ops);
-        }
-      }
+      // const allOperations: Operation[] = [];
+      // for (const name of selectedProducers) {
+      //   const producer = producers.get(name);
+      //   if (producer) {
+      //     const ops = await producer.produce(library);
+      //     allOperations.push(...ops);
+      //   }
+      // }
 
-      if (allOperations.length === 0) {
-        setScanError("No operations to perform");
-        setScreen({ type: "welcome" });
-        return;
-      }
+      // if (allOperations.length === 0) {
+      //   setScanError("No operations to perform");
+      //   setScreen({ type: "welcome" });
+      //   return;
+      // }
 
-      setScreen({ folder, operations: allOperations, type: "review" });
+      setScreen({ folder, operations: [], type: "review" });
     },
-    [libraryRepository, producers],
+    [],
   );
 
   const handleApplyFromReview = useCallback(
@@ -130,19 +100,12 @@ export function App({
     screen.type === "review" || screen.type === "apply"
       ? screen.operations
       : [],
-    filesystem as { rename: (old: string, newPath: string) => Promise<void> },
-    tagWriter as {
-      updateTags: (
-        updates: { path: string; tags: Record<string, string | number> }[],
-      ) => Promise<void>;
-    },
   );
 
   switch (screen.type) {
     case "welcome":
       return (
         <WelcomeScreen
-          cachedLibraries={cachedLibraries}
           onScan={(path) => {
             setScreen({
               controller: controller.current,
@@ -173,10 +136,7 @@ export function App({
           onConfirm={(selected) =>
             handleProducerConfirm(selected, screen.folder)
           }
-          producers={producerNames.map((name) => ({
-            description: PRODUCER_DESCRIPTIONS[name] ?? "Unknown producer",
-            name,
-          }))}
+          producers={[]}
         />
       );
 
