@@ -1,25 +1,18 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
+import { useApp } from "@/presentation/tui/hooks/use-app";
 
-type ApplyScreenProps = {
-  stats: { accepted: number; rejected: number; total: number };
-  onConfirm: () => Promise<{ success: number; failed: number }>;
-  onCancel: () => void;
-  onError: (error: string) => void;
-};
-
-export function ApplyScreen({
-  stats,
-  onConfirm,
-  onCancel,
-  onError,
-}: ApplyScreenProps) {
+export function ApplyScreen() {
   const renderer = useRenderer();
   const [applying, setApplying] = useState(false);
   const [result, setResult] = useState<{
     success: number;
     failed: number;
   } | null>(null);
+  const {
+    operations: { apply, stats },
+    setScreen,
+  } = useApp();
 
   useKeyboard((key) => {
     if (applying) return;
@@ -32,18 +25,18 @@ export function ApplyScreen({
     switch (key.name) {
       case "return":
         setApplying(true);
-        onConfirm()
+        apply()
           .then((r) => {
             setResult(r);
             setApplying(false);
           })
           .catch((err) => {
             setApplying(false);
-            onError(err instanceof Error ? err.message : String(err));
+            setScreen({ type: "welcome" });
           });
         break;
       case "escape":
-        onCancel();
+        setScreen({ type: "welcome" });
         break;
       case "q":
         renderer.destroy();

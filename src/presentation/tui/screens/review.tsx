@@ -28,6 +28,7 @@ export function ReviewScreen() {
       stats,
     },
     folder,
+    setScreen,
   } = useApp();
 
   const visibleNodes: FlatNode[] = useMemo(
@@ -62,6 +63,10 @@ export function ReviewScreen() {
       select(currentNode.node.operation.id);
     }
   }, [currentNode, select]);
+
+  const handleEnter = useCallback(() => {
+    setScreen({ type: "apply" });
+  }, [setScreen]);
 
   const handleSpace = useCallback(() => {
     if (currentNode?.type === "leaf") {
@@ -140,6 +145,10 @@ export function ReviewScreen() {
         break;
       case "space":
         handleSpace();
+        break;
+
+      case "return":
+        handleEnter();
         break;
       case "a":
         if (key.shift) acceptAll();
