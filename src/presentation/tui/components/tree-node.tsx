@@ -1,5 +1,6 @@
 import type { OperationState } from "#/hooks/use-operations";
-import type { Operation } from "@/lib/producers/types";
+import type { Operation } from "@/types/operation";
+import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
 
 type TreeNodeProps = {
   operation: OperationState;
@@ -8,17 +9,23 @@ type TreeNodeProps = {
 };
 
 function formatRenameOp(op: Operation): string {
-  if (op.type !== "rename") return "";
-  const oldName = op.oldPath.split("/").pop() ?? "";
-  const newName = op.newPath.split("/").pop() ?? "";
-  return `${oldName} → ${newName}`;
+  if (isRenameOperation(op)) {
+    const oldName = op.oldPath.split("/").pop() ?? "";
+    const newName = op.newPath.split("/").pop() ?? "";
+    return `${oldName} → ${newName}`;
+  }
+
+  return "";
 }
 
 function formatTagUpdateOp(op: Operation): string {
-  if (op.type !== "tag-update") return "";
-  const filename = op.path.split("/").pop() ?? "";
-  const tagNames = Object.keys(op.tags).join(", ");
-  return `${filename}  [${tagNames}]`;
+  if (isTagUpdateOperation(op)) {
+    const filename = op.path.split("/").pop() ?? "";
+    const tagNames = Object.keys(op.tags).join(", ");
+    return `${filename}  [${tagNames}]`;
+  }
+
+  return "";
 }
 
 function StatusIcon({ status }: { status: OperationState["status"] }) {

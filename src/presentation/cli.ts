@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { cacheService } from "@/containers/cache.container";
-import { runService } from "@/containers/run.container";
+import { producerService } from "@/containers/producer.container";
 import { scannerService } from "@/containers/scanner.container";
 import type { CacheService } from "@/services/cache.service";
 
@@ -133,7 +133,7 @@ export function createCLI(): Command {
     .argument("<folder>", "Path to the music folder")
     .action(async (producer: string, folder: string) => {
       await scannerService.scan(folder);
-      await runService.run(producer, folder);
+      await producerService.run(producer, folder);
     });
 
   const cache = program.command("cache").description("Manage cached libraries");

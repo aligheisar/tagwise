@@ -1,36 +1,15 @@
 import { useKeyboard } from "@opentui/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useApp } from "@/presentation/tui/hooks/use-app";
 
-type ScanningScreenProps = {
-  folderPath: string;
-  onScan: () => Promise<void>;
-  onError: (error: string) => void;
-  controller: AbortController;
-};
-
-export function ScanningScreen({
-  folderPath,
-  onScan,
-  onError,
-  controller,
-}: ScanningScreenProps) {
+export function ScanningScreen() {
+  const { abortScan, folder } = useApp();
   const [dots, setDots] = useState("");
-  const onScanRef = useRef(onScan);
-  const onErrorRef = useRef(onError);
-
-  useEffect(() => {
-    onScanRef.current = onScan;
-    onErrorRef.current = onError;
-  }, [onScan, onError]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setDots((prev) => (prev.length >= 3 ? "" : `${prev}.`));
     }, 400);
-
-    onScanRef.current().catch((err) => {
-      onErrorRef.current(err instanceof Error ? err.message : "Scan failed");
-    });
 
     return () => {
       clearInterval(interval);
@@ -39,7 +18,7 @@ export function ScanningScreen({
 
   useKeyboard((key) => {
     if (key.name === "escape") {
-      controller.abort();
+      abortScan();
     }
   });
 
@@ -69,7 +48,7 @@ export function ScanningScreen({
       </text>
       <text>
         <span fg="#7aa2f7">{"  ║"}</span>
-        <span fg="#e0af68">{`  ${folderPath}`}</span>
+        <span fg="#e0af68">{`  ${folder}`}</span>
         <span fg="#7aa2f7">{"║"}</span>
       </text>
       <text>

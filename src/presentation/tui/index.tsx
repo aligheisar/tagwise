@@ -11,8 +11,8 @@ export async function launchTUI(options: LaunchTUIOptions) {
   const renderer = await createCliRenderer({ exitOnCtrlC: false });
 
   createRoot(renderer).render(
-    <Providers>
-      <App initialFolder={options.initialFolder} />
+    <Providers initialFolder={options.initialFolder}>
+      <App />
     </Providers>,
   );
 }

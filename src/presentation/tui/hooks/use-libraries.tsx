@@ -1,7 +1,5 @@
-"use client";
-
 import { use } from "react";
-import { librariesContext } from "@/presentation/tui/context/libraries-context";
+import { librariesContext } from "#/context/libraries-context";
 
 const useLibraries = () => {
   const context = use(librariesContext);

@@ -1,6 +1,7 @@
 import { useKeyboard } from "@opentui/react";
 import type { OperationState } from "#/hooks/use-operations";
-import type { Operation } from "@/lib/producers/types";
+import type { Operation } from "@/types/operation";
+import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
 
 type DetailModalProps = {
   operation: OperationState;
@@ -106,11 +107,11 @@ export function DetailModal({ operation, onClose }: DetailModalProps) {
         </span>
       </text>
 
-      {operation.operation.type === "rename" ? (
+      {isRenameOperation(operation.operation) ? (
         <RenameDetail op={operation.operation} />
-      ) : (
+      ) : isTagUpdateOperation(operation.operation) ? (
         <TagUpdateDetail op={operation.operation} />
-      )}
+      ) : null}
 
       <text>
         <span fg={borderColor}>

@@ -1,9 +1,12 @@
 import path from "node:path";
 import sanitize from "sanitize-filename";
 import type { Library } from "@/types/library";
-import type { Operation, Producer } from "./types";
+import type { Operation } from "@/types/operation";
+import type { Producer } from "@/types/producer";
 
 export class RenamerProducer implements Producer {
+  name = "renamer";
+
   produce(library: Library): Promise<Operation[]> {
     const operations: Operation[] = [];
 
@@ -16,6 +19,7 @@ export class RenamerProducer implements Producer {
       if (title === baseName) continue;
 
       operations.push({
+        id: `${this.name}-${item.path}`,
         newPath: path.join(
           path.dirname(item.path),
           title + path.extname(item.path),
