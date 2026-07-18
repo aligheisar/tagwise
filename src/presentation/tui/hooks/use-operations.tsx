@@ -10,6 +10,7 @@ import { filesystemService } from "@/containers/filesystem.container";
 import { tagWriterService } from "@/containers/tag-writer.container";
 import type { Operation } from "@/types/operation";
 import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
+import { getOperationFolder } from "@/utils/operation-path";
 
 type OperationStatus = "accepted" | "rejected" | "modified";
 
@@ -50,30 +51,6 @@ type UseOperationsReturn = {
     modified: number;
   };
 };
-
-function getOperationFolder(op: Operation): string {
-  if (isRenameOperation(op)) {
-    const parts = op.oldPath.split("/");
-    parts.pop();
-    return parts.join("/") || "/";
-  } else if (isTagUpdateOperation(op)) {
-    const parts = op.path.split("/");
-    parts.pop();
-    return parts.join("/") || "/";
-  }
-
-  return "";
-}
-
-function getOperationFilename(op: Operation): string {
-  if (isRenameOperation(op)) {
-    return op.oldPath.split("/").pop() ?? "";
-  } else if (isTagUpdateOperation(op)) {
-    return op.path.split("/").pop() ?? "";
-  }
-
-  return "";
-}
 
 export function useOperations(): UseOperationsReturn {
   const [rawOperations, setRawOperations] = useState<Operation[]>([]);
@@ -204,13 +181,12 @@ export function useOperations(): UseOperationsReturn {
       }
     }
 
-    for (const r of renames) {
-      try {
-        await filesystemService.rename(r.old, r.new);
-        success++;
-      } catch {
-        failed++;
-      }
+    const renameResults = await Promise.allSettled(
+      renames.map((r) => filesystemService.rename(r.old, r.new)),
+    );
+    for (const result of renameResults) {
+      if (result.status === "fulfilled") success++;
+      else failed++;
     }
 
     if (tagUpdates.length > 0) {
@@ -226,11 +202,15 @@ export function useOperations(): UseOperationsReturn {
   }, [operations]);
 
   const stats = useMemo(() => {
-    const total = operations.length;
-    const accepted = operations.filter((o) => o.status === "accepted").length;
-    const rejected = operations.filter((o) => o.status === "rejected").length;
-    const modified = operations.filter((o) => o.status === "modified").length;
-    return { accepted, modified, rejected, total };
+    let accepted = 0;
+    let rejected = 0;
+    let modified = 0;
+    for (const op of operations) {
+      if (op.status === "accepted") accepted++;
+      else if (op.status === "rejected") rejected++;
+      else if (op.status === "modified") modified++;
+    }
+    return { accepted, modified, rejected, total: operations.length };
   }, [operations]);
 
   return {
@@ -250,12 +230,10 @@ export function useOperations(): UseOperationsReturn {
   };
 }
 
-export {
-  getOperationFilename,
-  getOperationFolder,
-  type OperationState,
-  type OperationStatus,
-  type RenameModification,
-  type TagUpdateModification,
-  type UseOperationsReturn,
+export type {
+  OperationState,
+  OperationStatus,
+  RenameModification,
+  TagUpdateModification,
+  UseOperationsReturn,
 };

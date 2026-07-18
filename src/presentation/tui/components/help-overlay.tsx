@@ -1,3 +1,5 @@
+import { colors } from "#/theme";
+
 const SHORTCUTS = [
   { desc: "Navigate down / up", key: "j / k" },
   { desc: "Collapse / expand folder", key: "h / l" },
@@ -15,9 +17,9 @@ const SHORTCUTS = [
 export function HelpOverlay() {
   return (
     <box
-      backgroundColor="#1a1a2e"
+      backgroundColor={colors.bgDark}
       border
-      borderColor="#7aa2f7"
+      borderColor={colors.accent}
       flexDirection="column"
       height="70%"
       left="20%"
@@ -28,29 +30,37 @@ export function HelpOverlay() {
       zIndex={100}
     >
       <text>
-        <span fg="#7aa2f7">{"  ╔══════════════════════════════════════╗"}</span>
+        <span fg={colors.accent}>
+          {"  ╔══════════════════════════════════════╗"}
+        </span>
       </text>
       <text>
-        <span fg="#7aa2f7">{"  ║"}</span>
-        <span fg="#c0caf5">{"         KEYBOARD SHORTCUTS            "}</span>
-        <span fg="#7aa2f7">{"║"}</span>
+        <span fg={colors.accent}>{"  ║"}</span>
+        <span fg={colors.fgBright}>
+          {"         KEYBOARD SHORTCUTS            "}
+        </span>
+        <span fg={colors.accent}>{"║"}</span>
       </text>
       <text>
-        <span fg="#7aa2f7">{"  ╠══════════════════════════════════════╣"}</span>
+        <span fg={colors.accent}>
+          {"  ╠══════════════════════════════════════╣"}
+        </span>
       </text>
       {SHORTCUTS.map((s) => (
         <text key={s.key}>
-          <span fg="#7aa2f7">{"  ║  "}</span>
-          <span fg="#e0af68">{s.key.padEnd(14)}</span>
-          <span fg="#a9b1d6">{s.desc}</span>
-          <span fg="#7aa2f7">{"  ║"}</span>
+          <span fg={colors.accent}>{"  ║  "}</span>
+          <span fg={colors.warning}>{s.key.padEnd(14)}</span>
+          <span fg={colors.fg}>{s.desc}</span>
+          <span fg={colors.accent}>{"  ║"}</span>
         </text>
       ))}
       <text>
-        <span fg="#7aa2f7">{"  ╚══════════════════════════════════════╝"}</span>
+        <span fg={colors.accent}>
+          {"  ╚══════════════════════════════════════╝"}
+        </span>
       </text>
       <text>
-        <span fg="#565f89">{"                 Press ? to close"}</span>
+        <span fg={colors.muted}>{"                 Press ? to close"}</span>
       </text>
     </box>
   );

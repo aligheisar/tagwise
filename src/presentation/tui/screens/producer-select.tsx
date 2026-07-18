@@ -1,7 +1,8 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
+import { useApp } from "#/hooks/use-app";
+import { colors } from "#/theme";
 import { producerService } from "@/containers/producer.container";
-import { useApp } from "@/presentation/tui/hooks/use-app";
 
 export function ProducerSelect() {
   const renderer = useRenderer();
@@ -61,19 +62,19 @@ export function ProducerSelect() {
     <box flexDirection="column" flexGrow={1} padding={2}>
       <box marginBottom={1}>
         <text>
-          <span fg="#7aa2f7">
+          <span fg={colors.accent}>
             {"  ╔═══════════════════════════════════════════╗"}
           </span>
         </text>
         <text>
-          <span fg="#7aa2f7">{"  ║"}</span>
-          <span fg="#c0caf5">
+          <span fg={colors.accent}>{"  ║"}</span>
+          <span fg={colors.fgBright}>
             {"           SELECT PRODUCERS                 "}
           </span>
-          <span fg="#7aa2f7">{"║"}</span>
+          <span fg={colors.accent}>{"║"}</span>
         </text>
         <text>
-          <span fg="#7aa2f7">
+          <span fg={colors.accent}>
             {"  ╚═══════════════════════════════════════════╝"}
           </span>
         </text>
@@ -85,21 +86,21 @@ export function ProducerSelect() {
           const isCursor = i === cursorIndex;
           return (
             <box
-              backgroundColor={isCursor ? "#24283b" : undefined}
+              backgroundColor={isCursor ? colors.bgHighlight : undefined}
               flexDirection="row"
               key={producer.name}
               paddingX={2}
               paddingY={0}
             >
               <text>
-                <span fg={isCursor ? "#e0af68" : "#565f89"}>
+                <span fg={isCursor ? colors.warning : colors.muted}>
                   {isCursor ? "→ " : "  "}
                 </span>
-                <span fg={isSelected ? "#9ece6a" : "#f7768e"}>
+                <span fg={isSelected ? colors.success : colors.error}>
                   {isSelected ? "[x] " : "[ ] "}
                 </span>
-                <span fg="#7aa2f7">{producer.name}</span>
-                <span fg="#565f89">{` — ${producer.description}`}</span>
+                <span fg={colors.accent}>{producer.name}</span>
+                <span fg={colors.muted}>{` — ${producer.description}`}</span>
               </text>
             </box>
           );
@@ -108,7 +109,7 @@ export function ProducerSelect() {
 
       <box marginTop={1}>
         <text>
-          <span fg="#565f89">
+          <span fg={colors.muted}>
             {
               "  Space: toggle | a: select all | n: deselect all | Enter: confirm"
             }

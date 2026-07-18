@@ -1,4 +1,4 @@
-import { exists, readdir } from "node:fs/promises";
+import { access, readdir } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { useKeyboard } from "@opentui/react";
 import {
@@ -7,7 +7,8 @@ import {
   useCallback,
   useState,
 } from "react";
-import { useApp } from "@/presentation/tui/hooks/use-app";
+import { useApp } from "#/hooks/use-app";
+import { colors } from "#/theme";
 
 async function getSuggestions(input: string): Promise<string[]> {
   if (!input.trim()) return [];
@@ -103,8 +104,10 @@ const ScanFolderInput = ({
 
         case "return": {
           const fn = async () => {
-            const isExist = await exists(inputValue.trim());
-            if (isExist) handleScan(inputValue.trim());
+            try {
+              await access(inputValue.trim());
+              handleScan(inputValue.trim());
+            } catch {}
           };
 
           fn();
@@ -117,12 +120,12 @@ const ScanFolderInput = ({
   return (
     <box flexDirection="column" marginBottom={1}>
       <text>
-        <span fg="#e0af68">{focusMode === "input" ? "▸ " : "  "}</span>
-        <span fg="#c0caf5">Scan a new folder:</span>
+        <span fg={colors.warning}>{focusMode === "input" ? "▸ " : "  "}</span>
+        <span fg={colors.fgBright}>Scan a new folder:</span>
       </text>
       <box
         border
-        borderColor={focusMode === "input" ? "#7aa2f7" : "#565f89"}
+        borderColor={focusMode === "input" ? colors.accent : colors.muted}
         flexGrow={1}
         paddingX={1}
       >
@@ -136,7 +139,7 @@ const ScanFolderInput = ({
       {suggestions.length > 0 && focusMode === "input" && (
         <box
           border
-          borderColor="#565f89"
+          borderColor={colors.muted}
           flexDirection="column"
           marginTop={0}
           paddingX={1}
@@ -144,8 +147,10 @@ const ScanFolderInput = ({
           {suggestions.map((s, i) => (
             <box key={s}>
               <text>
-                <span fg="#565f89">{i === suggestionIndex ? "→ " : "  "}</span>
-                <span fg={i === suggestionIndex ? "#c0caf5" : "#a9b1d6"}>
+                <span fg={colors.muted}>
+                  {i === suggestionIndex ? "→ " : "  "}
+                </span>
+                <span fg={i === suggestionIndex ? colors.fgBright : colors.fg}>
                   {s}
                 </span>
               </text>

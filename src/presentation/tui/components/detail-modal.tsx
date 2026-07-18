@@ -1,5 +1,7 @@
+import path from "node:path";
 import { useKeyboard } from "@opentui/react";
 import type { OperationState } from "#/hooks/use-operations";
+import { colors } from "#/theme";
 import type { Operation } from "@/types/operation";
 import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
 
@@ -9,23 +11,23 @@ type DetailModalProps = {
 };
 
 function RenameDetail({ op }: { op: Extract<Operation, { type: "rename" }> }) {
-  const oldName = op.oldPath.split("/").pop() ?? "";
-  const newName = op.newPath.split("/").pop() ?? "";
-  const dir = op.oldPath.split("/").slice(0, -1).join("/") || "/";
+  const oldName = path.basename(op.oldPath);
+  const newName = path.basename(op.newPath);
+  const dir = path.dirname(op.oldPath);
 
   return (
     <box flexDirection="column" gap={1}>
       <text>
-        <span fg="#565f89"> Path: </span>
-        <span fg="#a9b1d6">{dir}/</span>
+        <span fg={colors.muted}> Path: </span>
+        <span fg={colors.fg}>{dir}/</span>
       </text>
       <text>
-        <span fg="#565f89"> From: </span>
-        <span fg="#f7768e">{oldName}</span>
+        <span fg={colors.muted}> From: </span>
+        <span fg={colors.error}>{oldName}</span>
       </text>
       <text>
-        <span fg="#565f89"> To: </span>
-        <span fg="#9ece6a">{newName}</span>
+        <span fg={colors.muted}> To: </span>
+        <span fg={colors.success}>{newName}</span>
       </text>
     </box>
   );
@@ -36,23 +38,23 @@ function TagUpdateDetail({
 }: {
   op: Extract<Operation, { type: "tag-update" }>;
 }) {
-  const filename = op.path.split("/").pop() ?? "";
-  const dir = op.path.split("/").slice(0, -1).join("/") || "/";
+  const filename = path.basename(op.path);
+  const dir = path.dirname(op.path);
 
   return (
     <box flexDirection="column" gap={1}>
       <text>
-        <span fg="#565f89"> Path: </span>
-        <span fg="#a9b1d6">
+        <span fg={colors.muted}> Path: </span>
+        <span fg={colors.fg}>
           {dir}/{filename}
         </span>
       </text>
       {Object.entries(op.tags).map(([key, value]) => (
         <text key={key}>
-          <span fg="#565f89"> Tag: </span>
-          <span fg="#bb9af7">{key}</span>
-          <span fg="#565f89"> → </span>
-          <span fg="#9ece6a">{String(value)}</span>
+          <span fg={colors.muted}> Tag: </span>
+          <span fg={colors.purple}>{key}</span>
+          <span fg={colors.muted}> → </span>
+          <span fg={colors.success}>{String(value)}</span>
         </text>
       ))}
     </box>
@@ -70,14 +72,14 @@ export function DetailModal({ operation, onClose }: DetailModalProps) {
 
   const borderColor =
     operation.status === "accepted"
-      ? "#9ece6a"
+      ? colors.success
       : operation.status === "rejected"
-        ? "#f7768e"
-        : "#e0af68";
+        ? colors.error
+        : colors.warning;
 
   return (
     <box
-      backgroundColor="#1a1a2e"
+      backgroundColor={colors.bgDark}
       border
       borderColor={borderColor}
       flexDirection="column"
@@ -96,7 +98,7 @@ export function DetailModal({ operation, onClose }: DetailModalProps) {
       </text>
       <text>
         <span fg={borderColor}>{"  ║"}</span>
-        <span fg="#c0caf5">
+        <span fg={colors.fgBright}>
           {"          OPERATION DETAIL                 "}
         </span>
         <span fg={borderColor}>{"║"}</span>
@@ -120,7 +122,7 @@ export function DetailModal({ operation, onClose }: DetailModalProps) {
       </text>
 
       <text>
-        <span fg="#565f89">{"  Esc: close"}</span>
+        <span fg={colors.muted}>{"  Esc: close"}</span>
       </text>
     </box>
   );

@@ -20,7 +20,7 @@ interface TagUpdateOperation extends BaseOperation {
 interface CustomOperation extends BaseOperation {
   description?: string;
   payload: Record<string, unknown>;
-  type: string;
+  type: "custom";
 }
 
 type Operation = RenameOperation | TagUpdateOperation | CustomOperation;

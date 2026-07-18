@@ -1,6 +1,7 @@
 import { useKeyboard } from "@opentui/react";
 import { useEffect, useState } from "react";
-import { useApp } from "@/presentation/tui/hooks/use-app";
+import { useApp } from "#/hooks/use-app";
+import { colors } from "#/theme";
 
 export function ScanningScreen() {
   const { abortScan, folder } = useApp();
@@ -30,34 +31,34 @@ export function ScanningScreen() {
       justifyContent="center"
     >
       <text>
-        <span fg="#7aa2f7">
+        <span fg={colors.accent}>
           {"  ╔═══════════════════════════════════════════╗"}
         </span>
       </text>
       <text>
-        <span fg="#7aa2f7">{"  ║"}</span>
-        <span fg="#c0caf5">
+        <span fg={colors.accent}>{"  ║"}</span>
+        <span fg={colors.fgBright}>
           {"            SCANNING LIBRARY                 "}
         </span>
-        <span fg="#7aa2f7">{"║"}</span>
+        <span fg={colors.accent}>{"║"}</span>
       </text>
       <text>
-        <span fg="#7aa2f7">
+        <span fg={colors.accent}>
           {"  ╠═══════════════════════════════════════════╣"}
         </span>
       </text>
       <text>
-        <span fg="#7aa2f7">{"  ║"}</span>
-        <span fg="#e0af68">{`  ${folder}`}</span>
-        <span fg="#7aa2f7">{"║"}</span>
+        <span fg={colors.accent}>{"  ║"}</span>
+        <span fg={colors.warning}>{`  ${folder}`}</span>
+        <span fg={colors.accent}>{"║"}</span>
       </text>
       <text>
-        <span fg="#7aa2f7">{"  ║"}</span>
-        <span fg="#9ece6a">{`  Scanning${dots}`}</span>
-        <span fg="#7aa2f7">{"║"}</span>
+        <span fg={colors.accent}>{"  ║"}</span>
+        <span fg={colors.success}>{`  Scanning${dots}`}</span>
+        <span fg={colors.accent}>{"║"}</span>
       </text>
       <text>
-        <span fg="#7aa2f7">
+        <span fg={colors.accent}>
           {"  ╚═══════════════════════════════════════════╝"}
         </span>
       </text>

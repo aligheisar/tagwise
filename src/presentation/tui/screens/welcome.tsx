@@ -3,13 +3,14 @@ import { useState } from "react";
 import { CachedLibraries } from "#/components/cached-libraries";
 import { LogoBanner } from "#/components/logo-banner";
 import { ScanFolderInput } from "#/components/scan-folder-input";
+import { useApp } from "#/hooks/use-app";
 import { useLibraries } from "#/hooks/use-libraries";
-import { useApp } from "@/presentation/tui/hooks/use-app";
+import { colors } from "#/theme";
 
 export function WelcomeScreen() {
   const renderer = useRenderer();
   const { libraries } = useLibraries();
-  const { handleSelectCached } = useApp();
+  const { handleSelectCached, scanError } = useApp();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [focusMode, setFocusMode] = useState<"cached" | "input">("input");
 
@@ -53,13 +54,18 @@ export function WelcomeScreen() {
     >
       <box flexDirection="column" gap={1} padding={1}>
         <LogoBanner />
+        {scanError && (
+          <text>
+            <span fg={colors.error}>{scanError}</span>
+          </text>
+        )}
         <CachedLibraries focusMode={focusMode} selectedIndex={selectedIndex} />
         <ScanFolderInput focusMode={focusMode} setFocusMode={setFocusMode} />
       </box>
 
       <box>
         <text>
-          <span fg="#565f89">
+          <span fg={colors.muted}>
             {focusMode === "input"
               ? " Enter: scan | ↑↓: suggestions | Esc: back"
               : " Tab: input | Enter: select | ↑↓/jk: navigate | q: quit"}

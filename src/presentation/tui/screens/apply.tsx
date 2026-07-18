@@ -1,6 +1,7 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
-import { useApp } from "@/presentation/tui/hooks/use-app";
+import { useApp } from "#/hooks/use-app";
+import { colors } from "#/theme";
 
 export function ApplyScreen() {
   const renderer = useRenderer();
@@ -30,7 +31,7 @@ export function ApplyScreen() {
             setResult(r);
             setApplying(false);
           })
-          .catch((err) => {
+          .catch((_err) => {
             setApplying(false);
             setScreen({ type: "welcome" });
           });
@@ -52,71 +53,75 @@ export function ApplyScreen() {
       justifyContent="center"
     >
       <box
-        backgroundColor="#1a1a2e"
+        backgroundColor={colors.bgDark}
         border
-        borderColor="#7aa2f7"
+        borderColor={colors.accent}
         flexDirection="column"
         padding={2}
         width={50}
       >
         <text>
-          <span fg="#7aa2f7">
+          <span fg={colors.accent}>
             {"  ╔═══════════════════════════════════════╗"}
           </span>
         </text>
         <text>
-          <span fg="#7aa2f7">{"  ║"}</span>
-          <span fg="#c0caf5">
+          <span fg={colors.accent}>{"  ║"}</span>
+          <span fg={colors.fgBright}>
             {"          CONFIRM CHANGES                  "}
           </span>
-          <span fg="#7aa2f7">{"║"}</span>
+          <span fg={colors.accent}>{"║"}</span>
         </text>
         <text>
-          <span fg="#7aa2f7">
+          <span fg={colors.accent}>
             {"  ╠═══════════════════════════════════════╣"}
           </span>
         </text>
         <text>
-          <span fg="#7aa2f7">{"  ║"}</span>
-          <span fg="#a9b1d6">{`  Total operations:  ${stats.total}`}</span>
-          <span fg="#7aa2f7">{"║"}</span>
+          <span fg={colors.accent}>{"  ║"}</span>
+          <span fg={colors.fg}>{`  Total operations:  ${stats.total}`}</span>
+          <span fg={colors.accent}>{"║"}</span>
         </text>
         <text>
-          <span fg="#7aa2f7">{"  ║"}</span>
-          <span fg="#9ece6a">{`  Will apply:        ${stats.accepted}`}</span>
-          <span fg="#7aa2f7">{"║"}</span>
+          <span fg={colors.accent}>{"  ║"}</span>
+          <span
+            fg={colors.success}
+          >{`  Will apply:        ${stats.accepted}`}</span>
+          <span fg={colors.accent}>{"║"}</span>
         </text>
         <text>
-          <span fg="#7aa2f7">{"  ║"}</span>
-          <span fg="#f7768e">{`  Will skip:         ${stats.rejected}`}</span>
-          <span fg="#7aa2f7">{"║"}</span>
+          <span fg={colors.accent}>{"  ║"}</span>
+          <span
+            fg={colors.error}
+          >{`  Will skip:         ${stats.rejected}`}</span>
+          <span fg={colors.accent}>{"║"}</span>
         </text>
         <text>
-          <span fg="#7aa2f7">
+          <span fg={colors.accent}>
             {"  ╠═══════════════════════════════════════╣"}
           </span>
         </text>
 
         {applying && (
           <text>
-            <span fg="#7aa2f7">{"  ║"}</span>
-            <span fg="#e0af68">{"  Applying changes..."}</span>
-            <span fg="#7aa2f7">{"║"}</span>
+            <span fg={colors.accent}>{"  ║"}</span>
+            <span fg={colors.warning}>{"  Applying changes..."}</span>
+            <span fg={colors.accent}>{"║"}</span>
           </text>
         )}
 
         {result && (
           <box flexDirection="column">
             <text>
-              <span fg="#7aa2f7">{"  ║"}</span>
-              <span fg="#9ece6a">{`  Applied: ${result.success}`}</span>
-              <span fg="#7aa2f7">{"║"}</span>
+              <span fg={colors.accent}>{"  ║"}</span>
+              <span fg={colors.success}>{`  Applied: ${result.success}`}</span>
+              <span fg={colors.accent}>{"║"}</span>
             </text>
             {result.failed > 0 && (
               <text>
-                <span fg="#7aa2f7">{"  ║"}</span>
-                <span fg="#f7768e">{`  Failed:  ${result.failed}`}</span>
-                <span fg="#7aa2f7">{"║"}</span>
+                <span fg={colors.accent}>{"  ║"}</span>
+                <span fg={colors.error}>{`  Failed:  ${result.failed}`}</span>
+                <span fg={colors.accent}>{"║"}</span>
               </text>
             )}
           </box>
@@ -124,22 +129,22 @@ export function ApplyScreen() {
 
         {!applying && !result && (
           <text>
-            <span fg="#7aa2f7">{"  ║"}</span>
-            <span fg="#565f89">{"  Enter: apply | Esc: cancel"}</span>
-            <span fg="#7aa2f7">{"║"}</span>
+            <span fg={colors.accent}>{"  ║"}</span>
+            <span fg={colors.muted}>{"  Enter: apply | Esc: cancel"}</span>
+            <span fg={colors.accent}>{"║"}</span>
           </text>
         )}
 
         {result && (
           <text>
-            <span fg="#7aa2f7">{"  ║"}</span>
-            <span fg="#565f89">{"  Press any key to exit"}</span>
-            <span fg="#7aa2f7">{"║"}</span>
+            <span fg={colors.accent}>{"  ║"}</span>
+            <span fg={colors.muted}>{"  Press any key to exit"}</span>
+            <span fg={colors.accent}>{"║"}</span>
           </text>
         )}
 
         <text>
-          <span fg="#7aa2f7">
+          <span fg={colors.accent}>
             {"  ╚═══════════════════════════════════════╝"}
           </span>
         </text>

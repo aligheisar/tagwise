@@ -5,9 +5,10 @@ import { HelpOverlay } from "#/components/help-overlay";
 import { StatusBar } from "#/components/status-bar";
 import type { FlatNode } from "#/components/tree-view";
 import { computeVisibleNodes, TreeView } from "#/components/tree-view";
-import { getOperationFolder } from "#/hooks/use-operations";
+import { useApp } from "#/hooks/use-app";
 import { useVimNav } from "#/hooks/use-vim-nav";
-import { useApp } from "@/presentation/tui/hooks/use-app";
+import { colors } from "#/theme";
+import { getOperationFolder } from "@/utils/operation-path";
 
 export function ReviewScreen() {
   const renderer = useRenderer();
@@ -173,26 +174,26 @@ export function ReviewScreen() {
   return (
     <box flexDirection="column" flexGrow={1}>
       <box
-        backgroundColor="#1a1a2e"
+        backgroundColor={colors.bgDark}
         flexDirection="row"
         justifyContent="space-between"
         paddingX={1}
       >
         <text>
-          <span fg="#7aa2f7">[</span>
-          <span fg="#c0caf5">j/k</span>
-          <span fg="#565f89">:nav </span>
-          <span fg="#c0caf5">h/l</span>
-          <span fg="#565f89">:fold </span>
-          <span fg="#c0caf5">Space</span>
-          <span fg="#565f89">:toggle </span>
-          <span fg="#c0caf5">i</span>
-          <span fg="#565f89">:detail </span>
-          <span fg="#c0caf5">a/r</span>
-          <span fg="#565f89">:folder </span>
-          <span fg="#c0caf5">A/R</span>
-          <span fg="#565f89">:all </span>
-          <span fg="#7aa2f7">]</span>
+          <span fg={colors.accent}>[</span>
+          <span fg={colors.fgBright}>j/k</span>
+          <span fg={colors.muted}>:nav </span>
+          <span fg={colors.fgBright}>h/l</span>
+          <span fg={colors.muted}>:fold </span>
+          <span fg={colors.fgBright}>Space</span>
+          <span fg={colors.muted}>:toggle </span>
+          <span fg={colors.fgBright}>i</span>
+          <span fg={colors.muted}>:detail </span>
+          <span fg={colors.fgBright}>a/r</span>
+          <span fg={colors.muted}>:folder </span>
+          <span fg={colors.fgBright}>A/R</span>
+          <span fg={colors.muted}>:all </span>
+          <span fg={colors.accent}>]</span>
         </text>
       </box>
 
@@ -206,14 +207,12 @@ export function ReviewScreen() {
 
       <StatusBar mode="review" stats={stats} />
 
-      {selectedId &&
-        currentNode?.type === "leaf" &&
-        (() => {
-          const opState = currentNode.node.operation;
-          return (
-            <DetailModal onClose={() => select(null)} operation={opState} />
-          );
-        })()}
+      {selectedId && currentNode?.type === "leaf" && (
+        <DetailModal
+          onClose={() => select(null)}
+          operation={currentNode.node.operation}
+        />
+      )}
 
       {showHelp && <HelpOverlay />}
     </box>

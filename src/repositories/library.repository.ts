@@ -42,12 +42,19 @@ function normalizeRoot(root: string): string {
 function rootToFilename(root: string): string {
   return normalizeRoot(root)
     .replace(/^\//, "")
-    .replaceAll("/", "__")
-    .replaceAll(".", "_");
+    .split("/")
+    .map((segment) => Buffer.from(segment).toString("base64url"))
+    .join("__");
 }
 
 function filenameToRoot(filename: string): string {
-  return `/${filename.replaceAll("__", "/").replaceAll("_", ".")}`;
+  return (
+    "/" +
+    filename
+      .split("__")
+      .map((segment) => Buffer.from(segment, "base64url").toString("utf8"))
+      .join("/")
+  );
 }
 
 class LibraryRepository {
@@ -58,6 +65,7 @@ class LibraryRepository {
     "tagwise",
     "libraries",
   );
+  private readonly memoryCache = new Map<string, Library>();
 
   private fileForRoot(root: string): string {
     return path.join(this.librariesDir, `${rootToFilename(root)}.json`);
@@ -71,17 +79,25 @@ class LibraryRepository {
 
     await writeFile(
       this.fileForRoot(normalizedRoot),
-      JSON.stringify(data, null, 2),
+      JSON.stringify(data),
       "utf8",
     );
+
+    this.memoryCache.set(normalizedRoot, data);
   }
 
   async load(root: string): Promise<Library | null> {
+    const normalizedRoot = normalizeRoot(root);
+
+    const cached = this.memoryCache.get(normalizedRoot);
+    if (cached) return cached;
+
     try {
       const json = await readFile(this.fileForRoot(root), "utf8");
       const data = JSON.parse(json) as Library;
       data.cachedAt = new Date(data.cachedAt);
       data.root = normalizeRoot(data.root);
+      this.memoryCache.set(data.root, data);
       return data;
     } catch {
       return null;
@@ -99,6 +115,7 @@ class LibraryRepository {
 
   async delete(root: string): Promise<void> {
     await rm(this.fileForRoot(root), { force: true });
+    this.memoryCache.delete(normalizeRoot(root));
   }
 
   async listRoots(): Promise<string[]> {

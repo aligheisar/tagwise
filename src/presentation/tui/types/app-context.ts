@@ -4,6 +4,7 @@ import type { Screen } from "#/types/screen";
 
 type ContextValues = {
   folder: string | null;
+  scanError: string | null;
   operations: UseOperationsReturn;
   screen: Screen;
   setScreen: Dispatch<SetStateAction<Screen>>;
