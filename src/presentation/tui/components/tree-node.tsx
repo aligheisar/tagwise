@@ -1,4 +1,6 @@
+import path from "node:path";
 import type { OperationState } from "#/hooks/use-operations";
+import { colors } from "#/theme";
 import type { Operation } from "@/types/operation";
 import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
 
@@ -10,8 +12,8 @@ type TreeNodeProps = {
 
 function formatRenameOp(op: Operation): string {
   if (isRenameOperation(op)) {
-    const oldName = op.oldPath.split("/").pop() ?? "";
-    const newName = op.newPath.split("/").pop() ?? "";
+    const oldName = path.basename(op.oldPath);
+    const newName = path.basename(op.newPath);
     return `${oldName} → ${newName}`;
   }
 
@@ -20,7 +22,7 @@ function formatRenameOp(op: Operation): string {
 
 function formatTagUpdateOp(op: Operation): string {
   if (isTagUpdateOperation(op)) {
-    const filename = op.path.split("/").pop() ?? "";
+    const filename = path.basename(op.path);
     const tagNames = Object.keys(op.tags).join(", ");
     return `${filename}  [${tagNames}]`;
   }
@@ -31,19 +33,19 @@ function formatTagUpdateOp(op: Operation): string {
 function StatusIcon({ status }: { status: OperationState["status"] }) {
   switch (status) {
     case "accepted":
-      return <span fg="#9ece6a">{" ✓ "}</span>;
+      return <span fg={colors.success}>{" ✓ "}</span>;
     case "rejected":
-      return <span fg="#f7768e">{" ✗ "}</span>;
+      return <span fg={colors.error}>{" ✗ "}</span>;
     case "modified":
-      return <span fg="#e0af68">{" ★ "}</span>;
+      return <span fg={colors.warning}>{" ★ "}</span>;
   }
 }
 
 function OperationTypeBadge({ type }: { type: Operation["type"] }) {
-  const color = type === "rename" ? "#7aa2f7" : "#bb9af7";
+  const color = type === "rename" ? colors.accent : colors.purple;
   const label = type === "rename" ? "rename" : "tag";
   return (
-    <span bg="#1a1b26" fg={color}>
+    <span bg={colors.bg} fg={color}>
       {` ${label} `}
     </span>
   );
@@ -51,7 +53,7 @@ function OperationTypeBadge({ type }: { type: Operation["type"] }) {
 
 export function TreeNode({ operation, isSelected, depth }: TreeNodeProps) {
   const indent = "  ".repeat(depth);
-  const bgColor = isSelected ? "#24283b" : undefined;
+  const bgColor = isSelected ? colors.bgHighlight : undefined;
   const description =
     operation.operation.type === "rename"
       ? formatRenameOp(operation.operation)
@@ -60,10 +62,12 @@ export function TreeNode({ operation, isSelected, depth }: TreeNodeProps) {
   return (
     <box backgroundColor={bgColor} flexDirection="row" paddingX={1}>
       <text>
-        <span fg="#565f89">{indent}</span>
+        <span fg={colors.muted}>{indent}</span>
         <StatusIcon status={operation.status} />
         <OperationTypeBadge type={operation.operation.type} />
-        <span fg={operation.status === "rejected" ? "#565f89" : "#c0caf5"}>
+        <span
+          fg={operation.status === "rejected" ? colors.muted : colors.fgBright}
+        >
           {` ${description}`}
         </span>
       </text>

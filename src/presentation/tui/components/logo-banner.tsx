@@ -1,8 +1,10 @@
+import { colors } from "#/theme";
+
 const LogoBanner = () => {
   return (
     <box justifyContent="center">
-      <text fg="#c0caf5">TAGWISE TUI</text>
-      <text fg="#565f89">Music Library Tag Manager</text>
+      <text fg={colors.fgBright}>TAGWISE TUI</text>
+      <text fg={colors.muted}>Music Library Tag Manager</text>
     </box>
   );
 };

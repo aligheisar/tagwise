@@ -1,6 +1,7 @@
 import { TreeNode } from "#/components/tree-node";
 import type { OperationState } from "#/hooks/use-operations";
-import { getOperationFolder } from "#/hooks/use-operations";
+import { colors } from "#/theme";
+import { getOperationFolder } from "@/utils/operation-path";
 
 type TreeNodeData = {
   type: "folder";
@@ -25,14 +26,6 @@ type TreeViewProps = {
   expandedFolders: Set<string>;
 };
 
-function countOperations(node: TreeNodeData): number {
-  let count = node.leafChildren.length;
-  for (const child of node.children) {
-    count += countOperations(child);
-  }
-  return count;
-}
-
 export function TreeView({
   visibleNodes,
   cursorIndex,
@@ -41,9 +34,9 @@ export function TreeView({
   return (
     <box flexDirection="column" flexGrow={1}>
       {visibleNodes.map((item, index) => {
-        const indent = "  ".repeat(item.depth);
         const isSelected = index === cursorIndex;
-        const bgColor = isSelected ? "#24283b" : undefined;
+        const bgColor = isSelected ? colors.bgHighlight : undefined;
+        const indent = "  ".repeat(item.depth);
 
         if (item.type === "leaf") {
           return (
@@ -57,7 +50,7 @@ export function TreeView({
         }
 
         const node = item.node;
-        const opCount = countOperations(node);
+        const opCount = node.leafChildren.length;
 
         return (
           <box
@@ -67,12 +60,12 @@ export function TreeView({
             paddingX={1}
           >
             <text>
-              <span fg="#565f89">{indent}</span>
-              <span fg="#e0af68">
+              <span fg={colors.muted}>{indent}</span>
+              <span fg={colors.warning}>
                 {expandedFolders.has(node.path) ? "▼ " : "▶ "}
               </span>
-              <span fg="#7aa2f7">{node.displayName}/</span>
-              <span fg="#565f89">{` (${opCount} operations)`}</span>
+              <span fg={colors.accent}>{node.displayName}/</span>
+              <span fg={colors.muted}>{` (${opCount} operations)`}</span>
             </text>
           </box>
         );

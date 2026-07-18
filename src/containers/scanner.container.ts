@@ -1,10 +1,7 @@
-import { LibraryRepository } from "@/repositories/library.repository";
-import { FilesystemService } from "@/services/filesystem.service";
+import { filesystemService } from "@/containers/filesystem.container";
+import { libraryRepository } from "@/containers/repository.container";
 import { ScannerService } from "@/services/scanner.service";
 
-const libraryRepository = new LibraryRepository();
-const filesystem = new FilesystemService();
-
-const scannerService = new ScannerService(libraryRepository, filesystem);
+const scannerService = new ScannerService(libraryRepository, filesystemService);
 
 export { scannerService };

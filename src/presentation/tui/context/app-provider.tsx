@@ -27,7 +27,7 @@ const AppProvider = ({
       : { type: "welcome" },
   );
 
-  const [_scanError, setScanError] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
   const ops = useOperations();
 
   const handleScan = useCallback(async (folder: string) => {
@@ -35,15 +35,25 @@ const AppProvider = ({
     setFolder(folder);
     setScreen({ type: "scanning" });
 
-    await scannerService.scan(folder, {
-      signal: scanController.current.signal,
-    });
-    const library = await cacheService.get(normalizeRoot(folder));
-    if (!library) {
-      throw new Error("Scan completed but library not found in cache");
-    }
+    try {
+      await scannerService.scan(folder, {
+        signal: scanController.current.signal,
+      });
+      const library = await cacheService.get(normalizeRoot(folder));
+      if (!library) {
+        setScanError("Scan completed but library not found in cache");
+        setScreen({ type: "welcome" });
+        return;
+      }
 
-    setScreen({ type: "producer-select" });
+      setScreen({ type: "producer-select" });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      setScanError(
+        `Scan failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
+      setScreen({ type: "welcome" });
+    }
   }, []);
 
   const abortScan = useCallback(async () => {
@@ -88,11 +98,11 @@ const AppProvider = ({
         return;
       }
 
-      const selected = selectedProducers.values();
+      const selected = Array.from(selectedProducers);
 
-      for await (const item of selected) {
-        await producerService.run(item, folder);
-      }
+      await Promise.allSettled(
+        selected.map((item) => producerService.run(item, folder)),
+      );
 
       const operations = operationService.getAll();
 
@@ -121,6 +131,7 @@ const AppProvider = ({
     handleSelectCached,
     operations: ops,
     scanController,
+    scanError,
     screen,
     setScreen,
   };

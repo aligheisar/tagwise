@@ -11,11 +11,16 @@ export class CacheService {
 
   async list(): Promise<CacheListResult> {
     const roots = await this.libraryRepository.listRoots();
+    const libraries = await Promise.all(
+      roots.map((root) => this.libraryRepository.load(root)),
+    );
+
     const summaries: CacheListResult["libraries"] = [];
 
-    for (const root of roots) {
-      const library = await this.libraryRepository.load(root);
-      if (!library) continue;
+    for (let i = 0; i < libraries.length; i++) {
+      const library = libraries[i];
+      const root = roots[i];
+      if (!library || !root) continue;
 
       const itemCount = library.items.length;
       const okCount = library.items.filter((i) => i.status === "ok").length;

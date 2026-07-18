@@ -1,4 +1,5 @@
 import type { UseOperationsReturn } from "#/hooks/use-operations";
+import { colors } from "#/theme";
 
 type StatusBarProps = {
   stats: UseOperationsReturn["stats"];
@@ -8,26 +9,26 @@ type StatusBarProps = {
 export function StatusBar({ stats, mode }: StatusBarProps) {
   return (
     <box
-      backgroundColor="#1a1a2e"
+      backgroundColor={colors.bgDark}
       flexDirection="row"
       justifyContent="space-between"
       paddingX={1}
     >
       <text>
-        <span fg="#7aa2f7">[</span>
-        <span fg="#9ece6a">{stats.accepted} accepted</span>
-        <span fg="#7aa2f7"> | </span>
-        <span fg="#f7768e">{stats.rejected} rejected</span>
-        <span fg="#7aa2f7"> | </span>
-        <span fg="#e0af68">{stats.modified} modified</span>
-        <span fg="#7aa2f7"> / </span>
-        <span fg="#a9b1d6">{stats.total} total</span>
-        <span fg="#7aa2f7">]</span>
+        <span fg={colors.accent}>[</span>
+        <span fg={colors.success}>{stats.accepted} accepted</span>
+        <span fg={colors.accent}> | </span>
+        <span fg={colors.error}>{stats.rejected} rejected</span>
+        <span fg={colors.accent}> | </span>
+        <span fg={colors.warning}>{stats.modified} modified</span>
+        <span fg={colors.accent}> / </span>
+        <span fg={colors.fg}>{stats.total} total</span>
+        <span fg={colors.accent}>]</span>
       </text>
       <text>
-        <span fg="#565f89">{mode}</span>
-        <span fg="#7aa2f7"> | </span>
-        <span fg="#565f89">? help</span>
+        <span fg={colors.muted}>{mode}</span>
+        <span fg={colors.accent}> | </span>
+        <span fg={colors.muted}>? help</span>
       </text>
     </box>
   );

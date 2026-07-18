@@ -1,5 +1,4 @@
-import { existsSync } from "node:fs";
-import { readdir, rename, stat } from "node:fs/promises";
+import { access, readdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
 
 class FilesystemService {
@@ -8,7 +7,12 @@ class FilesystemService {
   }
 
   async exists(filePath: string): Promise<boolean> {
-    return existsSync(filePath);
+    try {
+      await access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async hasChangedSince(dir: string, since: Date): Promise<boolean> {
@@ -20,15 +24,21 @@ class FilesystemService {
 
       try {
         const entries = await readdir(current, { withFileTypes: true });
-        for (const entry of entries) {
-          const fullPath = path.join(current, entry.name);
-          try {
-            const fileStat = await stat(fullPath);
+        const stats = await Promise.allSettled(
+          entries.map((entry) => {
+            const fullPath = path.join(current, entry.name);
+            return stat(fullPath).then((s) => ({ entry, fullPath, stat: s }));
+          }),
+        );
+
+        for (const result of stats) {
+          if (result.status === "fulfilled") {
+            const { entry, fullPath, stat: fileStat } = result.value;
             if (fileStat.mtime > since) return true;
             if (entry.isDirectory() && (await walk(fullPath))) return true;
-          } catch (_err) {}
+          }
         }
-      } catch (_err) {
+      } catch {
         return false;
       }
 
