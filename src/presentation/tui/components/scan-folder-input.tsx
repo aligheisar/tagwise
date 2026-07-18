@@ -7,6 +7,7 @@ import {
   useCallback,
   useState,
 } from "react";
+import { useApp } from "@/presentation/tui/hooks/use-app";
 
 async function getSuggestions(input: string): Promise<string[]> {
   if (!input.trim()) return [];
@@ -44,15 +45,14 @@ async function getSuggestions(input: string): Promise<string[]> {
 const ScanFolderInput = ({
   focusMode,
   setFocusMode,
-  onScan,
 }: {
   focusMode: "cached" | "input";
   setFocusMode: Dispatch<SetStateAction<"cached" | "input">>;
-  onScan: (path: string) => void;
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
+  const { handleScan } = useApp();
 
   const handleInputChange = useCallback(async (value: string) => {
     setInputValue(value);
@@ -104,7 +104,7 @@ const ScanFolderInput = ({
         case "return": {
           const fn = async () => {
             const isExist = await exists(inputValue.trim());
-            if (isExist) onScan(inputValue.trim());
+            if (isExist) handleScan(inputValue.trim());
           };
 
           fn();

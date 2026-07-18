@@ -1,7 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { filesystemService } from "@/containers/filesystem.container";
 import { tagWriterService } from "@/containers/tag-writer.container";
-import type { Operation } from "@/lib/producers/types";
+import type { Operation } from "@/types/operation";
+import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
 
 type OperationStatus = "accepted" | "rejected" | "modified";
 
@@ -21,6 +29,7 @@ type OperationState = {
 
 type UseOperationsReturn = {
   operations: OperationState[];
+  setRawOperations: Dispatch<SetStateAction<Operation[]>>;
   selectedId: string | null;
   select: (id: string | null) => void;
   toggle: (id: string) => void;
@@ -43,24 +52,31 @@ type UseOperationsReturn = {
 };
 
 function getOperationFolder(op: Operation): string {
-  if (op.type === "rename") {
+  if (isRenameOperation(op)) {
     const parts = op.oldPath.split("/");
     parts.pop();
     return parts.join("/") || "/";
+  } else if (isTagUpdateOperation(op)) {
+    const parts = op.path.split("/");
+    parts.pop();
+    return parts.join("/") || "/";
   }
-  const parts = op.path.split("/");
-  parts.pop();
-  return parts.join("/") || "/";
+
+  return "";
 }
 
 function getOperationFilename(op: Operation): string {
-  if (op.type === "rename") {
+  if (isRenameOperation(op)) {
     return op.oldPath.split("/").pop() ?? "";
+  } else if (isTagUpdateOperation(op)) {
+    return op.path.split("/").pop() ?? "";
   }
-  return op.path.split("/").pop() ?? "";
+
+  return "";
 }
 
-export function useOperations(rawOperations: Operation[]): UseOperationsReturn {
+export function useOperations(): UseOperationsReturn {
+  const [rawOperations, setRawOperations] = useState<Operation[]>([]);
   const [operations, setOperations] = useState<OperationState[]>(() =>
     rawOperations.map((op, i) => ({
       id: `${op.type}-${i}`,
@@ -165,7 +181,7 @@ export function useOperations(rawOperations: Operation[]): UseOperationsReturn {
     for (const op of operations) {
       if (op.status === "rejected") continue;
 
-      if (op.operation.type === "rename") {
+      if (isRenameOperation(op.operation)) {
         const base = op.operation;
         const modified =
           op.modifiedValue && "newPath" in op.modifiedValue
@@ -175,7 +191,7 @@ export function useOperations(rawOperations: Operation[]): UseOperationsReturn {
           new: modified?.newPath ?? base.newPath,
           old: base.oldPath,
         });
-      } else if (op.operation.type === "tag-update") {
+      } else if (isTagUpdateOperation(op.operation)) {
         const base = op.operation;
         const modified =
           op.modifiedValue && "tags" in op.modifiedValue
@@ -228,6 +244,7 @@ export function useOperations(rawOperations: Operation[]): UseOperationsReturn {
     rejectFolder,
     select,
     selectedId,
+    setRawOperations,
     stats,
     toggle,
   };

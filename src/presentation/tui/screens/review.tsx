@@ -5,59 +5,34 @@ import { HelpOverlay } from "#/components/help-overlay";
 import { StatusBar } from "#/components/status-bar";
 import type { FlatNode } from "#/components/tree-view";
 import { computeVisibleNodes, TreeView } from "#/components/tree-view";
-import type {
-  OperationState,
-  RenameModification,
-  TagUpdateModification,
-} from "#/hooks/use-operations";
 import { getOperationFolder } from "#/hooks/use-operations";
 import { useVimNav } from "#/hooks/use-vim-nav";
+import { useApp } from "@/presentation/tui/hooks/use-app";
 
-type ReviewScreenProps = {
-  operations: OperationState[];
-  libraryRoot: string;
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
-  onToggle: (id: string) => void;
-  onAcceptAll: () => void;
-  onRejectAll: () => void;
-  onAcceptFolder: (folder: string) => void;
-  onRejectFolder: (folder: string) => void;
-  onModify: (
-    id: string,
-    value: RenameModification | TagUpdateModification,
-  ) => void;
-  onApply: () => void;
-  stats: {
-    total: number;
-    accepted: number;
-    rejected: number;
-    modified: number;
-  };
-};
-
-export function ReviewScreen({
-  operations,
-  libraryRoot,
-  selectedId,
-  onSelect,
-  onToggle,
-  onAcceptAll,
-  onRejectAll,
-  onAcceptFolder,
-  onRejectFolder,
-  onApply: _onApply,
-  stats,
-}: ReviewScreenProps) {
+export function ReviewScreen() {
   const renderer = useRenderer();
   const [showHelp, setShowHelp] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
   );
+  const {
+    operations: {
+      select,
+      toggle,
+      operations,
+      acceptAll,
+      acceptFolder,
+      rejectAll,
+      rejectFolder,
+      selectedId,
+      stats,
+    },
+    folder,
+  } = useApp();
 
   const visibleNodes: FlatNode[] = useMemo(
-    () => computeVisibleNodes(operations, expandedFolders, libraryRoot),
-    [operations, expandedFolders, libraryRoot],
+    () => computeVisibleNodes(operations, expandedFolders, folder ?? ""),
+    [operations, expandedFolders, folder],
   );
 
   const { clampToRange, cursorIndex, moveUp, moveDown } = useVimNav({
@@ -82,37 +57,37 @@ export function ReviewScreen({
     });
   }, []);
 
-  const handleEnter = useCallback(() => {
+  const handleI = useCallback(() => {
     if (currentNode?.type === "leaf") {
-      onSelect(currentNode.node.operation.id);
+      select(currentNode.node.operation.id);
     }
-  }, [currentNode, onSelect]);
+  }, [currentNode, select]);
 
   const handleSpace = useCallback(() => {
     if (currentNode?.type === "leaf") {
-      onToggle(currentNode.node.operation.id);
+      toggle(currentNode.node.operation.id);
     }
-  }, [currentNode, onToggle]);
+  }, [currentNode, toggle]);
 
   const handleA = useCallback(() => {
     if (currentNode?.type === "leaf") {
       const folder = getOperationFolder(currentNode.node.operation.operation);
-      onAcceptFolder(folder);
+      acceptFolder(folder);
     }
-  }, [currentNode, onAcceptFolder]);
+  }, [currentNode, acceptFolder]);
 
   const handleR = useCallback(() => {
     if (currentNode?.type === "leaf") {
       const folder = getOperationFolder(currentNode.node.operation.operation);
-      onRejectFolder(folder);
+      rejectFolder(folder);
     }
-  }, [currentNode, onRejectFolder]);
+  }, [currentNode, rejectFolder]);
 
   const handleM = useCallback(() => {
     if (currentNode?.type === "leaf") {
-      onSelect(currentNode.node.operation.id);
+      select(currentNode.node.operation.id);
     }
-  }, [currentNode, onSelect]);
+  }, [currentNode, select]);
 
   const handleH = useCallback(() => {
     if (
@@ -142,7 +117,7 @@ export function ReviewScreen({
 
     if (selectedId) {
       if (key.name === "escape") {
-        onSelect(null);
+        select(null);
       }
       return;
     }
@@ -160,18 +135,18 @@ export function ReviewScreen({
       case "l":
         handleL();
         break;
-      case "return":
-        handleEnter();
+      case "i":
+        handleI();
         break;
       case "space":
         handleSpace();
         break;
       case "a":
-        if (key.shift) onAcceptAll();
+        if (key.shift) acceptAll();
         else handleA();
         break;
       case "r":
-        if (key.shift) onRejectAll();
+        if (key.shift) rejectAll();
         else handleR();
         break;
       case "m":
@@ -202,7 +177,7 @@ export function ReviewScreen({
           <span fg="#565f89">:fold </span>
           <span fg="#c0caf5">Space</span>
           <span fg="#565f89">:toggle </span>
-          <span fg="#c0caf5">Enter</span>
+          <span fg="#c0caf5">i</span>
           <span fg="#565f89">:detail </span>
           <span fg="#c0caf5">a/r</span>
           <span fg="#565f89">:folder </span>
@@ -227,7 +202,7 @@ export function ReviewScreen({
         (() => {
           const opState = currentNode.node.operation;
           return (
-            <DetailModal onClose={() => onSelect(null)} operation={opState} />
+            <DetailModal onClose={() => select(null)} operation={opState} />
           );
         })()}
 

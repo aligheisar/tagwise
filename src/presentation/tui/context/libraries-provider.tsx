@@ -1,9 +1,7 @@
-"use client";
-
 import { type ReactNode, useEffect, useState } from "react";
+import { librariesContext } from "#/context/libraries-context";
+import type { ContextValues } from "#/types/libraries-context";
 import { cacheService } from "@/containers/cache.container";
-import { librariesContext } from "@/presentation/tui/context/libraries-context";
-import type { ContextValues } from "@/presentation/tui/types/libraries-context";
 
 const LibrariesProvider = ({ children }: { children: ReactNode }) => {
   const [libraries, setLibraries] = useState<ContextValues["libraries"]>([]);

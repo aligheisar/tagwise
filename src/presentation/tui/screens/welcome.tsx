@@ -4,15 +4,12 @@ import { CachedLibraries } from "#/components/cached-libraries";
 import { LogoBanner } from "#/components/logo-banner";
 import { ScanFolderInput } from "#/components/scan-folder-input";
 import { useLibraries } from "#/hooks/use-libraries";
+import { useApp } from "@/presentation/tui/hooks/use-app";
 
-type WelcomeScreenProps = {
-  onSelectCached: (root: string) => void;
-  onScan: (path: string) => void;
-};
-
-export function WelcomeScreen({ onSelectCached, onScan }: WelcomeScreenProps) {
+export function WelcomeScreen() {
   const renderer = useRenderer();
   const { libraries } = useLibraries();
+  const { handleSelectCached } = useApp();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [focusMode, setFocusMode] = useState<"cached" | "input">("input");
 
@@ -40,7 +37,7 @@ export function WelcomeScreen({ onSelectCached, onScan }: WelcomeScreenProps) {
         if (focusMode !== "cached") return;
         if (libraries.length > 0) {
           const selected = libraries[selectedIndex];
-          if (selected) onSelectCached(selected.root);
+          if (selected) handleSelectCached(selected.root);
         }
         break;
       }
@@ -57,11 +54,7 @@ export function WelcomeScreen({ onSelectCached, onScan }: WelcomeScreenProps) {
       <box flexDirection="column" gap={1} padding={1}>
         <LogoBanner />
         <CachedLibraries focusMode={focusMode} selectedIndex={selectedIndex} />
-        <ScanFolderInput
-          focusMode={focusMode}
-          onScan={onScan}
-          setFocusMode={setFocusMode}
-        />
+        <ScanFolderInput focusMode={focusMode} setFocusMode={setFocusMode} />
       </box>
 
       <box>

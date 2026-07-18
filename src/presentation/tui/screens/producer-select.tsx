@@ -1,13 +1,13 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
+import { producerService } from "@/containers/producer.container";
+import { useApp } from "@/presentation/tui/hooks/use-app";
 
-type ProducerSelectProps = {
-  producers: { name: string; description: string }[];
-  onConfirm: (selected: string[]) => void;
-};
-
-export function ProducerSelect({ producers, onConfirm }: ProducerSelectProps) {
+export function ProducerSelect() {
   const renderer = useRenderer();
+  const producers = producerService.getAll();
+  const { handleProducerConfirm } = useApp();
+
   const [selected, setSelected] = useState<Set<string>>(
     new Set(producers.map((p) => p.name)),
   );
@@ -46,7 +46,7 @@ export function ProducerSelect({ producers, onConfirm }: ProducerSelectProps) {
         break;
       }
       case "return":
-        onConfirm(Array.from(selected));
+        handleProducerConfirm(selected);
         break;
       case "a":
         setSelected(new Set(producers.map((p) => p.name)));
