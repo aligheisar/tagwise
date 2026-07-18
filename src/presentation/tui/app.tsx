@@ -6,7 +6,8 @@ import { ScanningScreen } from "#/screens/scanning";
 import { WelcomeScreen } from "#/screens/welcome";
 
 export function App() {
-  const { screen, setScreen } = useApp();
+  const { screen } = useApp();
+
   switch (screen.type) {
     case "welcome":
       return <WelcomeScreen />;
@@ -21,17 +22,7 @@ export function App() {
       return <ReviewScreen />;
 
     case "apply":
-      return (
-        <ApplyScreen
-          onCancel={() => setScreen({ type: "welcome" })}
-          onConfirm={opsState.apply}
-          onError={(err) => {
-            setScanError(err);
-            setScreen({ type: "welcome" });
-          }}
-          stats={opsState.stats}
-        />
-      );
+      return <ApplyScreen />;
 
     default:
       return <text>Unknown screen</text>;

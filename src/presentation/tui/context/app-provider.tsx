@@ -4,6 +4,7 @@ import { useOperations } from "#/hooks/use-operations";
 import type { ContextValues } from "#/types/app-context";
 import type { Screen } from "#/types/screen";
 import { cacheService } from "@/containers/cache.container";
+import { filesystemService } from "@/containers/filesystem.container";
 import { operationService } from "@/containers/operation.container";
 import { producerService } from "@/containers/producer.container";
 import { scannerService } from "@/containers/scanner.container";
@@ -51,16 +52,29 @@ const AppProvider = ({
     setScreen({ type: "welcome" });
   }, []);
 
-  const handleSelectCached = useCallback(async (root: string) => {
-    const library = await cacheService.get(normalizeRoot(root));
-    if (!library) {
-      setScanError("Cached library not found");
-      return;
-    }
+  const handleSelectCached = useCallback(
+    async (root: string) => {
+      const library = await cacheService.get(normalizeRoot(root));
+      if (!library) {
+        setScanError("Cached library not found");
+        return;
+      }
 
-    setFolder(root);
-    setScreen({ type: "producer-select" });
-  }, []);
+      const hasChanges = await filesystemService.hasChangedSince(
+        library.root,
+        library.cachedAt,
+      );
+
+      if (hasChanges) {
+        handleScan(library.root);
+        return;
+      }
+
+      setFolder(root);
+      setScreen({ type: "producer-select" });
+    },
+    [handleScan],
+  );
 
   const handleProducerConfirm = useCallback(
     async (selectedProducers: Set<string>) => {
