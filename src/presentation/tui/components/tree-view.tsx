@@ -1,7 +1,7 @@
-import { TreeNode } from "#/components/tree-node";
-import type { OperationState } from "#/hooks/use-operations";
-import { colors } from "#/theme";
-import { getOperationFolder } from "@/utils/operation-path";
+import { getOperationFolder } from "#/utils/operation-path";
+import { TreeNode } from "@/components/tree-node";
+import type { OperationState } from "@/hooks/use-operations";
+import { colors } from "@/theme";
 
 type TreeNodeData = {
   type: "folder";

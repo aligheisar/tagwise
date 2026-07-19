@@ -1,7 +1,7 @@
 import "opentui-spinner/react";
 import { useKeyboard } from "@opentui/react";
-import { useApp } from "#/hooks/use-app";
-import { colors } from "#/theme";
+import { useApp } from "@/hooks/use-app";
+import { colors } from "@/theme";
 
 export function ScanningScreen() {
   const { abortScan, folder } = useApp();

@@ -1,9 +1,9 @@
-import { useApp } from "#/hooks/use-app";
-import { ApplyScreen } from "#/screens/apply";
-import { ProducerSelect } from "#/screens/producer-select";
-import { ReviewScreen } from "#/screens/review";
-import { ScanningScreen } from "#/screens/scanning";
-import { WelcomeScreen } from "#/screens/welcome";
+import { useApp } from "@/hooks/use-app";
+import { ApplyScreen } from "@/screens/apply";
+import { ProducerSelect } from "@/screens/producer-select";
+import { ReviewScreen } from "@/screens/review";
+import { ScanningScreen } from "@/screens/scanning";
+import { WelcomeScreen } from "@/screens/welcome";
 
 export function App() {
   const { screen } = useApp();

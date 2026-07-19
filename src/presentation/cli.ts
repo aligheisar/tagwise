@@ -1,8 +1,8 @@
 import { Command } from "commander";
-import { cacheService } from "@/containers/cache.container";
-import { producerService } from "@/containers/producer.container";
-import { scannerService } from "@/containers/scanner.container";
-import type { CacheService } from "@/services/cache.service";
+import { cacheService } from "#/containers/cache.container";
+import { producerService } from "#/containers/producer.container";
+import { scannerService } from "#/containers/scanner.container";
+import type { CacheService } from "#/services/cache.service";
 
 const COMPLETION_SCRIPT = `#!/bin/bash
 _tagwise_completions() {

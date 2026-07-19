@@ -1,8 +1,8 @@
-import type { LibraryRepository } from "@/repositories/library.repository";
-import { normalizeRoot } from "@/repositories/library.repository";
-import type { ProducerRepository } from "@/repositories/producer.repository";
-import type { OperationService } from "@/services/operation.service";
-import type { Producer } from "@/types/producer";
+import type { LibraryRepository } from "#/repositories/library.repository";
+import { normalizeRoot } from "#/repositories/library.repository";
+import type { ProducerRepository } from "#/repositories/producer.repository";
+import type { OperationService } from "#/services/operation.service";
+import type { Producer } from "#/types/producer";
 
 class ProducerService {
   constructor(

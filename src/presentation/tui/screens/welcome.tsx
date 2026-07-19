@@ -1,11 +1,11 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
-import { CachedLibraries } from "#/components/cached-libraries";
-import { LogoBanner } from "#/components/logo-banner";
-import { ScanFolderInput } from "#/components/scan-folder-input";
-import { useApp } from "#/hooks/use-app";
-import { useLibraries } from "#/hooks/use-libraries";
-import { colors } from "#/theme";
+import { CachedLibraries } from "@/components/cached-libraries";
+import { LogoBanner } from "@/components/logo-banner";
+import { ScanFolderInput } from "@/components/scan-folder-input";
+import { useApp } from "@/hooks/use-app";
+import { useLibraries } from "@/hooks/use-libraries";
+import { colors } from "@/theme";
 
 export function WelcomeScreen() {
   const renderer = useRenderer();

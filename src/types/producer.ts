@@ -1,5 +1,5 @@
-import type { Library } from "@/types/library";
-import type { Operation } from "@/types/operation";
+import type { Library } from "#/types/library";
+import type { Operation } from "#/types/operation";
 
 interface Producer {
   description?: string;

@@ -6,11 +6,11 @@ import {
   useMemo,
   useState,
 } from "react";
-import { filesystemService } from "@/containers/filesystem.container";
-import { tagWriterService } from "@/containers/tag-writer.container";
-import type { Operation } from "@/types/operation";
-import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
-import { getOperationFolder } from "@/utils/operation-path";
+import { filesystemService } from "#/containers/filesystem.container";
+import { tagWriterService } from "#/containers/tag-writer.container";
+import type { Operation } from "#/types/operation";
+import { isRenameOperation, isTagUpdateOperation } from "#/utils/is-operation";
+import { getOperationFolder } from "#/utils/operation-path";
 
 type OperationStatus = "accepted" | "rejected" | "modified";
 

@@ -3,7 +3,7 @@ import { type FolderScanOptions, scanFolder } from "taglib-wasm/folder";
 import {
   type LibraryRepository,
   normalizeRoot,
-} from "@/repositories/library.repository";
+} from "#/repositories/library.repository";
 import type { FilesystemService } from "./filesystem.service";
 
 class ScannerService {

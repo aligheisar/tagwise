@@ -1,4 +1,4 @@
-import { TagWriterService } from "@/services/tag-writer.service";
+import { TagWriterService } from "#/services/tag-writer.service";
 
 const tagWriterService = new TagWriterService();
 

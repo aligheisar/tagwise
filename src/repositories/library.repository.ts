@@ -8,7 +8,7 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { Library } from "@/types/library";
+import type { Library } from "#/types/library";
 
 type CachedLibrarySummary = {
   root: string;

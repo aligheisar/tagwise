@@ -2,9 +2,9 @@ import type {
   CacheListResult,
   CacheShowResult,
   LibraryRepository,
-} from "@/repositories/library.repository";
-import { normalizeRoot } from "@/repositories/library.repository";
-import type { Library } from "@/types/library";
+} from "#/repositories/library.repository";
+import { normalizeRoot } from "#/repositories/library.repository";
+import type { Library } from "#/types/library";
 
 export class CacheService {
   constructor(private readonly libraryRepository: LibraryRepository) {}

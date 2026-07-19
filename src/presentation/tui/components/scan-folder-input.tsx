@@ -7,8 +7,8 @@ import {
   useCallback,
   useState,
 } from "react";
-import { useApp } from "#/hooks/use-app";
-import { colors } from "#/theme";
+import { useApp } from "@/hooks/use-app";
+import { colors } from "@/theme";
 
 async function getSuggestions(input: string): Promise<string[]> {
   if (!input.trim()) return [];

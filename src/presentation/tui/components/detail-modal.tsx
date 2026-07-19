@@ -1,9 +1,9 @@
 import path from "node:path";
 import { useKeyboard } from "@opentui/react";
-import type { OperationState } from "#/hooks/use-operations";
-import { colors } from "#/theme";
-import type { Operation } from "@/types/operation";
-import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
+import type { Operation } from "#/types/operation";
+import { isRenameOperation, isTagUpdateOperation } from "#/utils/is-operation";
+import type { OperationState } from "@/hooks/use-operations";
+import { colors } from "@/theme";
 
 type DetailModalProps = {
   operation: OperationState;

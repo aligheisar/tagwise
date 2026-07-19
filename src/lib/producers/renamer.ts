@@ -1,8 +1,8 @@
 import path from "node:path";
 import sanitize from "sanitize-filename";
-import type { Library } from "@/types/library";
-import type { Operation } from "@/types/operation";
-import type { Producer } from "@/types/producer";
+import type { Library } from "#/types/library";
+import type { Operation } from "#/types/operation";
+import type { Producer } from "#/types/producer";
 
 export class RenamerProducer implements Producer {
   name = "renamer";

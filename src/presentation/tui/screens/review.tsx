@@ -1,14 +1,14 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DetailModal } from "#/components/detail-modal";
-import { HelpOverlay } from "#/components/help-overlay";
-import { StatusBar } from "#/components/status-bar";
-import type { FlatNode } from "#/components/tree-view";
-import { computeVisibleNodes, TreeView } from "#/components/tree-view";
-import { useApp } from "#/hooks/use-app";
-import { useVimNav } from "#/hooks/use-vim-nav";
-import { colors } from "#/theme";
-import { getOperationFolder } from "@/utils/operation-path";
+import { getOperationFolder } from "#/utils/operation-path";
+import { DetailModal } from "@/components/detail-modal";
+import { HelpOverlay } from "@/components/help-overlay";
+import { StatusBar } from "@/components/status-bar";
+import type { FlatNode } from "@/components/tree-view";
+import { computeVisibleNodes, TreeView } from "@/components/tree-view";
+import { useApp } from "@/hooks/use-app";
+import { useVimNav } from "@/hooks/use-vim-nav";
+import { colors } from "@/theme";
 
 export function ReviewScreen() {
   const renderer = useRenderer();

@@ -1,4 +1,4 @@
-import type { CachedLibrarySummary } from "@/repositories/library.repository";
+import type { CachedLibrarySummary } from "#/repositories/library.repository";
 
 type ContextValues = {
   libraries: CachedLibrarySummary[];

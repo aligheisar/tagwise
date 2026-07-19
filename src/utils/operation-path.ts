@@ -1,6 +1,6 @@
 import path from "node:path";
-import type { Operation } from "@/types/operation";
-import { isRenameOperation, isTagUpdateOperation } from "@/utils/is-operation";
+import type { Operation } from "#/types/operation";
+import { isRenameOperation, isTagUpdateOperation } from "#/utils/is-operation";
 
 function getOperationPath(op: Operation): string {
   if (isRenameOperation(op)) return op.oldPath;

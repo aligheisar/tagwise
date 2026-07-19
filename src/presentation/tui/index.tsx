@@ -1,7 +1,7 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
-import { App } from "#/app";
-import { Providers } from "#/context/providers";
+import { App } from "@/app";
+import { Providers } from "@/context/providers";
 
 type LaunchTUIOptions = {
   initialFolder?: string;

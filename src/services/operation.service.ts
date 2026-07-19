@@ -1,5 +1,5 @@
-import type { OperationRepository } from "@/repositories/operation.repository";
-import type { Operation } from "@/types/operation";
+import type { OperationRepository } from "#/repositories/operation.repository";
+import type { Operation } from "#/types/operation";
 
 class OperationService {
   constructor(private readonly operationRepository: OperationRepository) {}

@@ -1,7 +1,7 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
-import { useApp } from "#/hooks/use-app";
-import { colors } from "#/theme";
+import { useApp } from "@/hooks/use-app";
+import { colors } from "@/theme";
 
 export function ApplyScreen() {
   const renderer = useRenderer();

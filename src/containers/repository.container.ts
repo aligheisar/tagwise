@@ -1,4 +1,4 @@
-import { LibraryRepository } from "@/repositories/library.repository";
+import { LibraryRepository } from "#/repositories/library.repository";
 
 const libraryRepository = new LibraryRepository();
 

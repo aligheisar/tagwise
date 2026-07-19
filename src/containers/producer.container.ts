@@ -1,9 +1,9 @@
-import { operationService } from "@/containers/operation.container";
-import { libraryRepository } from "@/containers/repository.container";
-import { RemixTagProducer } from "@/lib/producers/remix-tag";
-import { RenamerProducer } from "@/lib/producers/renamer";
-import { ProducerRepository } from "@/repositories/producer.repository";
-import { ProducerService } from "@/services/producer.service";
+import { operationService } from "#/containers/operation.container";
+import { libraryRepository } from "#/containers/repository.container";
+import { RemixTagProducer } from "#/lib/producers/remix-tag";
+import { RenamerProducer } from "#/lib/producers/renamer";
+import { ProducerRepository } from "#/repositories/producer.repository";
+import { ProducerService } from "#/services/producer.service";
 
 const producerRepository = new ProducerRepository();
 

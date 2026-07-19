@@ -1,5 +1,5 @@
-import type { UseOperationsReturn } from "#/hooks/use-operations";
-import { colors } from "#/theme";
+import type { UseOperationsReturn } from "@/hooks/use-operations";
+import { colors } from "@/theme";
 
 type StatusBarProps = {
   stats: UseOperationsReturn["stats"];

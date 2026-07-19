@@ -1,8 +1,8 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
-import { useApp } from "#/hooks/use-app";
-import { colors } from "#/theme";
-import { producerService } from "@/containers/producer.container";
+import { producerService } from "#/containers/producer.container";
+import { useApp } from "@/hooks/use-app";
+import { colors } from "@/theme";
 
 export function ProducerSelect() {
   const renderer = useRenderer();
@@ -100,7 +100,9 @@ export function ProducerSelect() {
                   {isSelected ? "[x] " : "[ ] "}
                 </span>
                 <span fg={colors.accent}>{producer.name}</span>
-                <span fg={colors.muted}>{` — ${producer.description}`}</span>
+                <span fg={colors.muted}>
+                  {producer.description && ` — ${producer.description}`}
+                </span>
               </text>
             </box>
           );

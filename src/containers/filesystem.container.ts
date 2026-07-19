@@ -1,4 +1,4 @@
-import { FilesystemService } from "@/services/filesystem.service";
+import { FilesystemService } from "#/services/filesystem.service";
 
 const filesystemService = new FilesystemService();
 

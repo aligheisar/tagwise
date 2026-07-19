@@ -1,4 +1,4 @@
-import type { Producer } from "@/types/producer";
+import type { Producer } from "#/types/producer";
 
 export class ProducerRepository {
   private producers = new Map<string, Producer>();

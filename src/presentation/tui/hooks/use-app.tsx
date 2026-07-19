@@ -1,5 +1,5 @@
 import { use } from "react";
-import { appContext } from "#/context/app-context";
+import { appContext } from "@/context/app-context";
 
 const useApp = () => {
   const context = use(appContext);

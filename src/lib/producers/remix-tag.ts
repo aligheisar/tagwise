@@ -1,7 +1,7 @@
 import sanitize from "sanitize-filename";
-import type { Library } from "@/types/library";
-import type { Operation } from "@/types/operation";
-import type { Producer } from "@/types/producer";
+import type { Library } from "#/types/library";
+import type { Operation } from "#/types/operation";
+import type { Producer } from "#/types/producer";
 
 export class RemixTagProducer implements Producer {
   name = "remix-tag";

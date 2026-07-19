@@ -1,6 +1,6 @@
-import { createCLI } from "@/presentation/cli";
-import { launchTUI } from "@/presentation/tui";
-import { expandPath } from "@/utils/path";
+import { createCLI } from "#/presentation/cli";
+import { launchTUI } from "#/presentation/tui";
+import { expandPath } from "#/utils/path";
 
 const program = createCLI();
 

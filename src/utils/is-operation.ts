@@ -2,7 +2,7 @@ import type {
   Operation,
   RenameOperation,
   TagUpdateOperation,
-} from "@/types/operation";
+} from "#/types/operation";
 
 const isRenameOperation = (
   operation: Operation,

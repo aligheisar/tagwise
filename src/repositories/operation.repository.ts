@@ -1,4 +1,4 @@
-import type { Operation } from "@/types/operation";
+import type { Operation } from "#/types/operation";
 
 export class OperationRepository {
   private operations: Operation[] = [];

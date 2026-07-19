@@ -1,4 +1,4 @@
-import { colors } from "#/theme";
+import { colors } from "@/theme";
 
 const SHORTCUTS = [
   { desc: "Navigate down / up", key: "j / k" },

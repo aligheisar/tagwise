@@ -1,5 +1,5 @@
-import { useLibraries } from "#/hooks/use-libraries";
-import { colors } from "#/theme";
+import { useLibraries } from "@/hooks/use-libraries";
+import { colors } from "@/theme";
 
 const CachedLibraries = ({
   focusMode,
