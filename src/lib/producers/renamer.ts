@@ -6,6 +6,7 @@ import type { Producer } from "@/types/producer";
 
 export class RenamerProducer implements Producer {
   name = "renamer";
+  description = "Rename music with it's title.";
 
   produce(library: Library): Promise<Operation[]> {
     const operations: Operation[] = [];

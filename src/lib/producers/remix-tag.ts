@@ -5,6 +5,7 @@ import type { Producer } from "@/types/producer";
 
 export class RemixTagProducer implements Producer {
   name = "remix-tag";
+  description = "Add ' (Remix)' at the end of title.";
 
   produce(library: Library): Promise<Operation[]> {
     const operations: Operation[] = [];
