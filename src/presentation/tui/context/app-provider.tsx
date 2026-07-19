@@ -1,14 +1,15 @@
+import { toast } from "@opentui-ui/toast";
 import { type ReactNode, useCallback, useRef, useState } from "react";
-import { appContext } from "#/context/app-context";
-import { useOperations } from "#/hooks/use-operations";
-import type { ContextValues } from "#/types/app-context";
-import type { Screen } from "#/types/screen";
-import { cacheService } from "@/containers/cache.container";
-import { filesystemService } from "@/containers/filesystem.container";
-import { operationService } from "@/containers/operation.container";
-import { producerService } from "@/containers/producer.container";
-import { scannerService } from "@/containers/scanner.container";
-import { normalizeRoot } from "@/repositories/library.repository";
+import { cacheService } from "#/containers/cache.container";
+import { filesystemService } from "#/containers/filesystem.container";
+import { operationService } from "#/containers/operation.container";
+import { producerService } from "#/containers/producer.container";
+import { scannerService } from "#/containers/scanner.container";
+import { normalizeRoot } from "#/repositories/library.repository";
+import { appContext } from "@/context/app-context";
+import { useOperations } from "@/hooks/use-operations";
+import type { ContextValues } from "@/types/app-context";
+import type { Screen } from "@/types/screen";
 
 const AppProvider = ({
   children,
@@ -27,11 +28,9 @@ const AppProvider = ({
       : { type: "welcome" },
   );
 
-  const [scanError, setScanError] = useState<string | null>(null);
   const ops = useOperations();
 
   const handleScan = useCallback(async (folder: string) => {
-    setScanError(null);
     setFolder(folder);
     setScreen({ type: "scanning" });
 
@@ -41,7 +40,7 @@ const AppProvider = ({
       });
       const library = await cacheService.get(normalizeRoot(folder));
       if (!library) {
-        setScanError("Scan completed but library not found in cache");
+        toast("Scan completed but library not found in cache");
         setScreen({ type: "welcome" });
         return;
       }
@@ -49,7 +48,7 @@ const AppProvider = ({
       setScreen({ type: "producer-select" });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
-      setScanError(
+      toast(
         `Scan failed: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
       setScreen({ type: "welcome" });
@@ -66,7 +65,7 @@ const AppProvider = ({
     async (root: string) => {
       const library = await cacheService.get(normalizeRoot(root));
       if (!library) {
-        setScanError("Cached library not found");
+        toast("Cached library not found");
         return;
       }
 
@@ -93,7 +92,7 @@ const AppProvider = ({
       const library = await cacheService.get(normalizeRoot(folder));
 
       if (!library) {
-        setScanError("Library not found in cache");
+        toast("Library not found in cache");
         setScreen({ type: "welcome" });
         return;
       }
@@ -107,7 +106,7 @@ const AppProvider = ({
       const operations = operationService.getAll();
 
       if (operations.length === 0) {
-        setScanError("No operations to perform");
+        toast("No operations to perform");
         setScreen({ type: "welcome" });
         return;
       }
@@ -131,7 +130,6 @@ const AppProvider = ({
     handleSelectCached,
     operations: ops,
     scanController,
-    scanError,
     screen,
     setScreen,
   };

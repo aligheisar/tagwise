@@ -10,7 +10,7 @@ import { colors } from "@/theme";
 export function WelcomeScreen() {
   const renderer = useRenderer();
   const { libraries } = useLibraries();
-  const { handleSelectCached, scanError } = useApp();
+  const { handleSelectCached } = useApp();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [focusMode, setFocusMode] = useState<"cached" | "input">("input");
 
@@ -46,30 +46,18 @@ export function WelcomeScreen() {
   });
 
   return (
-    <box
-      flexDirection="column"
-      gap={1}
-      height="100%"
-      justifyContent="space-between"
-    >
+    <box gap={1} height="100%" justifyContent="space-between">
       <box flexDirection="column" gap={1} padding={1}>
         <LogoBanner />
-        {scanError && (
-          <text>
-            <span fg={colors.error}>{scanError}</span>
-          </text>
-        )}
         <CachedLibraries focusMode={focusMode} selectedIndex={selectedIndex} />
         <ScanFolderInput focusMode={focusMode} setFocusMode={setFocusMode} />
       </box>
 
       <box>
-        <text>
-          <span fg={colors.muted}>
-            {focusMode === "input"
-              ? " Enter: scan | ↑↓: suggestions | Esc: back"
-              : " Tab: input | Enter: select | ↑↓/jk: navigate | q: quit"}
-          </span>
+        <text fg={colors.muted}>
+          {focusMode === "input"
+            ? " Enter: scan | ↑↓: suggestions | Esc: back"
+            : " Tab: input | Enter: select | ↑↓/jk: navigate | q: quit"}
         </text>
       </box>
     </box>

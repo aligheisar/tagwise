@@ -13,7 +13,10 @@ const Providers = ({
 }) => {
   return (
     <AppProvider initialFolder={initialFolder}>
-      <LibrariesProvider>{children}</LibrariesProvider>
+      <ThemeProvider>
+        <Toaster />
+        <LibrariesProvider>{children}</LibrariesProvider>
+      </ThemeProvider>
     </AppProvider>
   );
 };
