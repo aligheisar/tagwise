@@ -23,6 +23,7 @@
     "@opentui/core": "0.4.2",
     "@opentui/react": "0.4.2",
     "commander": "15.0.0",
+    "opentui-spinner": "0.0.7",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "sanitize-filename": "1.6.4",
