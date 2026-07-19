@@ -20,6 +20,7 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
+    "@opentui-ui/toast": "0.0.5",
     "@opentui/core": "0.4.2",
     "@opentui/react": "0.4.2",
     "commander": "15.0.0",
