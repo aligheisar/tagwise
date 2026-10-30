@@ -6,11 +6,15 @@ import {
   useMemo,
   useState,
 } from "react";
+import { config } from "#/config";
 import { filesystemService } from "#/containers/filesystem.container";
 import { tagWriterService } from "#/containers/tag-writer.container";
 import type { Operation } from "#/types/operation";
 import { isRenameOperation, isTagUpdateOperation } from "#/utils/is-operation";
+import { logger } from "#/utils/logger";
 import { getOperationFolder } from "#/utils/operation-path";
+import { isPathWithinRoot } from "#/utils/path";
+import { settleInBatches } from "#/utils/settle-in-batches";
 
 type OperationStatus = "accepted" | "rejected" | "modified";
 
@@ -43,7 +47,9 @@ type UseOperationsReturn = {
     value: RenameModification | TagUpdateModification,
   ) => void;
   getFolder: (id: string) => string;
-  apply: () => Promise<{ success: number; failed: number }>;
+  apply: (
+    root: string,
+  ) => Promise<{ errors: string[]; success: number; failed: number }>;
   stats: {
     total: number;
     accepted: number;
@@ -145,61 +151,113 @@ export function useOperations(): UseOperationsReturn {
     [operations],
   );
 
-  const apply = useCallback(async () => {
-    let success = 0;
-    let failed = 0;
+  const apply = useCallback(
+    async (root: string) => {
+      let success = 0;
+      let failed = 0;
+      const errors: string[] = [];
 
-    const renames: { old: string; new: string }[] = [];
-    const tagUpdates: {
-      path: string;
-      tags: Record<string, string | number>;
-    }[] = [];
+      const renames: { old: string; new: string }[] = [];
+      const tagUpdates: {
+        path: string;
+        tags: Record<string, string | number>;
+      }[] = [];
 
-    for (const op of operations) {
-      if (op.status === "rejected") continue;
+      for (const op of operations) {
+        if (op.status === "rejected") continue;
 
-      if (isRenameOperation(op.operation)) {
-        const base = op.operation;
-        const modified =
-          op.modifiedValue && "newPath" in op.modifiedValue
-            ? (op.modifiedValue as RenameModification)
-            : null;
-        renames.push({
-          new: modified?.newPath ?? base.newPath,
-          old: base.oldPath,
-        });
-      } else if (isTagUpdateOperation(op.operation)) {
-        const base = op.operation;
-        const modified =
-          op.modifiedValue && "tags" in op.modifiedValue
-            ? (op.modifiedValue as TagUpdateModification)
-            : null;
-        tagUpdates.push({
-          path: base.path,
-          tags: modified?.tags ?? base.tags,
-        });
+        if (isRenameOperation(op.operation)) {
+          const base = op.operation;
+          const modified =
+            op.modifiedValue && "newPath" in op.modifiedValue
+              ? (op.modifiedValue as RenameModification)
+              : null;
+          const newPath = modified?.newPath ?? base.newPath;
+          if (
+            !isPathWithinRoot(root, base.oldPath) ||
+            !isPathWithinRoot(root, newPath)
+          ) {
+            failed++;
+            errors.push(`Refusing rename outside library root: ${newPath}`);
+            logger.error("Rejected rename outside library root", {
+              newPath,
+              oldPath: base.oldPath,
+              root,
+            });
+          } else {
+            renames.push({ new: newPath, old: base.oldPath });
+          }
+        } else if (isTagUpdateOperation(op.operation)) {
+          const base = op.operation;
+          const modified =
+            op.modifiedValue && "tags" in op.modifiedValue
+              ? (op.modifiedValue as TagUpdateModification)
+              : null;
+          if (!isPathWithinRoot(root, base.path)) {
+            failed++;
+            errors.push(
+              `Refusing tag update outside library root: ${base.path}`,
+            );
+            logger.error("Rejected tag update outside library root", {
+              path: base.path,
+              root,
+            });
+          } else {
+            tagUpdates.push({
+              path: base.path,
+              tags: modified?.tags ?? base.tags,
+            });
+          }
+        }
       }
-    }
 
-    const renameResults = await Promise.allSettled(
-      renames.map((r) => filesystemService.rename(r.old, r.new)),
-    );
-    for (const result of renameResults) {
-      if (result.status === "fulfilled") success++;
-      else failed++;
-    }
-
-    if (tagUpdates.length > 0) {
-      try {
-        await tagWriterService.updateTags(tagUpdates);
-        success += tagUpdates.length;
-      } catch {
-        failed += tagUpdates.length;
+      const renameResults = await settleInBatches(
+        renames,
+        config.filesystemConcurrency,
+        (rename) => filesystemService.rename(rename.old, rename.new),
+      );
+      for (let index = 0; index < renameResults.length; index++) {
+        const result = renameResults[index];
+        if (!result) continue;
+        if (result.status === "fulfilled") {
+          success++;
+        } else {
+          const rename = renames[index];
+          failed++;
+          const message =
+            result.reason instanceof Error
+              ? result.reason.message
+              : String(result.reason);
+          errors.push(`${rename?.old ?? "File"}: ${message}`);
+          logger.error("File rename failed", {
+            error: result.reason,
+            newPath: rename?.new,
+            oldPath: rename?.old,
+          });
+        }
       }
-    }
 
-    return { failed, success };
-  }, [operations]);
+      if (tagUpdates.length > 0) {
+        try {
+          const result = await tagWriterService.updateTags(tagUpdates);
+          success += result.success;
+          failed += result.failed;
+          errors.push(
+            ...result.errors.map((item) => `${item.path}: ${item.error}`),
+          );
+        } catch (error) {
+          failed += tagUpdates.length;
+          const message =
+            error instanceof Error ? error.message : String(error);
+          errors.push(`Tag update batch failed: ${message}`);
+          logger.error("Tag update batch failed", { error });
+        }
+      }
+
+      return { errors, failed, success };
+    },
+    [operations],
+  );
 
   const stats = useMemo(() => {
     let accepted = 0;

@@ -2,6 +2,8 @@ import { Command } from "commander";
 import { cacheService } from "#/containers/cache.container";
 import { producerService } from "#/containers/producer.container";
 import { scannerService } from "#/containers/scanner.container";
+import { MutableLibrary } from "#/lib/mutable-library";
+import { normalizeRoot } from "#/repositories/library.repository";
 import type { CacheService } from "#/services/cache.service";
 
 const COMPLETION_SCRIPT = `#!/bin/bash
@@ -11,7 +13,7 @@ _tagwise_completions() {
   cur="\${COMP_WORDS[COMP_CWORD]}"
   prev="\${COMP_WORDS[COMP_CWORD-1]}"
   commands="scan run cache completion"
-  producers="renamer remix"
+  producers="renamer remix-tag remove-remix-tag"
   cache_subs="list show purge"
 
   if [[ \${cur} == -* ]]; then
@@ -133,7 +135,13 @@ export function createCLI(): Command {
     .argument("<folder>", "Path to the music folder")
     .action(async (producer: string, folder: string) => {
       await scannerService.scan(folder);
-      await producerService.run(producer, folder);
+      const library = await cacheService.get(normalizeRoot(folder));
+      if (!library) {
+        throw new Error("Library not found in cache after scan.");
+      }
+      const mutableLib = new MutableLibrary(library);
+      const operations = await producerService.run(producer, mutableLib);
+      for (const op of operations) mutableLib.applyOperation(op);
     });
 
   const cache = program.command("cache").description("Manage cached libraries");

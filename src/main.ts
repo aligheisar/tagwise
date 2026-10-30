@@ -1,5 +1,6 @@
 import { createCLI } from "#/presentation/cli";
 import { launchTUI } from "#/presentation/tui";
+import { logger } from "#/utils/logger";
 import { expandPath } from "#/utils/path";
 
 const program = createCLI();
@@ -13,4 +14,8 @@ program.action((_, command) => {
   });
 });
 
-program.parse();
+program.parseAsync().catch((error: unknown) => {
+  logger.error("Command failed", { error });
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
+});

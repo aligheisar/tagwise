@@ -1,7 +1,7 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
+import { ScreenInfo } from "#/presentation/tui/components/screen-info";
 import { CachedLibraries } from "@/components/cached-libraries";
-import { LogoBanner } from "@/components/logo-banner";
 import { ScanFolderInput } from "@/components/scan-folder-input";
 import { useApp } from "@/hooks/use-app";
 import { useLibraries } from "@/hooks/use-libraries";
@@ -48,16 +48,20 @@ export function WelcomeScreen() {
   return (
     <box gap={1} height="100%" justifyContent="space-between">
       <box flexDirection="column" gap={1} padding={1}>
-        <LogoBanner />
+        <ScreenInfo
+          description="Music Library Tag Manager"
+          title="tagwise tui"
+        />
+
         <CachedLibraries focusMode={focusMode} selectedIndex={selectedIndex} />
         <ScanFolderInput focusMode={focusMode} setFocusMode={setFocusMode} />
       </box>
 
-      <box>
+      <box paddingX={1}>
         <text fg={colors.muted}>
           {focusMode === "input"
-            ? " Enter: scan | ↑↓: suggestions | Esc: back"
-            : " Tab: input | Enter: select | ↑↓/jk: navigate | q: quit"}
+            ? "Enter: scan | ↑↓: suggestions | Esc: back"
+            : "Tab: input | Enter: select | ↑↓/jk: navigate | q: quit"}
         </text>
       </box>
     </box>

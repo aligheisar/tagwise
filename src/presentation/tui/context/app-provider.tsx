@@ -2,10 +2,12 @@ import { toast } from "@opentui-ui/toast";
 import { type ReactNode, useCallback, useRef, useState } from "react";
 import { cacheService } from "#/containers/cache.container";
 import { filesystemService } from "#/containers/filesystem.container";
-import { operationService } from "#/containers/operation.container";
 import { producerService } from "#/containers/producer.container";
 import { scannerService } from "#/containers/scanner.container";
+import { MutableLibrary } from "#/lib/mutable-library";
 import { normalizeRoot } from "#/repositories/library.repository";
+import type { Operation } from "#/types/operation";
+import { logger } from "#/utils/logger";
 import { appContext } from "@/context/app-context";
 import { useOperations } from "@/hooks/use-operations";
 import type { ContextValues } from "@/types/app-context";
@@ -35,6 +37,7 @@ const AppProvider = ({
     setScreen({ type: "scanning" });
 
     try {
+      scanController.current = new AbortController();
       await scannerService.scan(folder, {
         signal: scanController.current.signal,
       });
@@ -48,6 +51,10 @@ const AppProvider = ({
       setScreen({ type: "producer-select" });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
+      logger.error("Scan failed in the terminal interface", {
+        error: err,
+        root: folder,
+      });
       toast(
         `Scan failed: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
@@ -57,62 +64,91 @@ const AppProvider = ({
 
   const abortScan = useCallback(async () => {
     scanController.current.abort();
+    scanController.current = new AbortController();
     setFolder(null);
     setScreen({ type: "welcome" });
   }, []);
 
   const handleSelectCached = useCallback(
     async (root: string) => {
-      const library = await cacheService.get(normalizeRoot(root));
-      if (!library) {
-        toast("Cached library not found");
-        return;
+      try {
+        const library = await cacheService.get(normalizeRoot(root));
+        if (!library) {
+          toast("Cached library not found");
+          return;
+        }
+
+        const hasChanges = await filesystemService.hasChangedSince(
+          library.root,
+          library.cachedAt,
+        );
+
+        if (hasChanges) {
+          await handleScan(library.root);
+          return;
+        }
+
+        setFolder(root);
+        setScreen({ type: "producer-select" });
+      } catch (error) {
+        logger.error("Could not load cached library", { error, root });
+        toast(
+          `Could not load cached library: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
-
-      const hasChanges = await filesystemService.hasChangedSince(
-        library.root,
-        library.cachedAt,
-      );
-
-      if (hasChanges) {
-        handleScan(library.root);
-        return;
-      }
-
-      setFolder(root);
-      setScreen({ type: "producer-select" });
     },
     [handleScan],
   );
 
   const handleProducerConfirm = useCallback(
-    async (selectedProducers: Set<string>) => {
+    async (selectedProducers: string[]) => {
       if (!folder) return;
 
-      const library = await cacheService.get(normalizeRoot(folder));
+      try {
+        const library = await cacheService.get(normalizeRoot(folder));
 
-      if (!library) {
-        toast("Library not found in cache");
+        if (!library) {
+          toast("Library not found in cache");
+          setScreen({ type: "welcome" });
+          return;
+        }
+
+        const mutableLib = new MutableLibrary(library);
+        const allOperations: Operation[] = [];
+        for (const name of selectedProducers) {
+          const producerOperations = await producerService.run(
+            name,
+            mutableLib,
+          );
+          for (const operation of producerOperations) {
+            mutableLib.applyOperation(operation);
+            allOperations.push(operation);
+          }
+        }
+
+        if (allOperations.length === 0) {
+          toast("No operations to perform");
+          setScreen({ type: "welcome" });
+          return;
+        }
+
+        logger.info("Generated operations for review", {
+          count: allOperations.length,
+          producers: selectedProducers,
+          root: library.root,
+        });
+        ops.setRawOperations(allOperations);
+        setScreen({ type: "review" });
+      } catch (error) {
+        logger.error("Could not generate library operations", {
+          error,
+          root: folder,
+        });
+        toast(
+          `Could not generate operations: ${error instanceof Error ? error.message : String(error)}`,
+        );
         setScreen({ type: "welcome" });
-        return;
       }
-
-      const selected = Array.from(selectedProducers);
-
-      await Promise.allSettled(
-        selected.map((item) => producerService.run(item, folder)),
-      );
-
-      const operations = operationService.getAll();
-
-      if (operations.length === 0) {
-        toast("No operations to perform");
-        setScreen({ type: "welcome" });
-        return;
-      }
-
-      ops.setRawOperations(operations);
-      setScreen({ type: "review" });
     },
     [folder, ops.setRawOperations],
   );

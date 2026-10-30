@@ -62,7 +62,7 @@ export class CacheService {
   }
 
   async purge(folder?: string): Promise<void> {
-    if (folder) {
+    if (folder !== undefined) {
       const root = normalizeRoot(folder);
       await this.libraryRepository.delete(root);
       return;

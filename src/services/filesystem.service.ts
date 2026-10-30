@@ -1,5 +1,11 @@
 import { access, readdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
+import { config } from "#/config";
+import { logger } from "#/utils/logger";
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error;
+}
 
 class FilesystemService {
   async rename(oldPath: string, newPath: string): Promise<void> {
@@ -10,8 +16,9 @@ class FilesystemService {
     try {
       await access(filePath);
       return true;
-    } catch {
-      return false;
+    } catch (error) {
+      if (isNodeError(error) && error.code === "ENOENT") return false;
+      throw error;
     }
   }
 
@@ -22,30 +29,54 @@ class FilesystemService {
       if (visited.has(current)) return false;
       visited.add(current);
 
-      try {
-        const entries = await readdir(current, { withFileTypes: true });
-        const stats = await Promise.allSettled(
-          entries.map((entry) => {
+      const entries = await readdir(current, { withFileTypes: true }).catch(
+        (error: unknown) => {
+          if (isNodeError(error) && error.code === "ENOENT") return null;
+          throw error;
+        },
+      );
+      if (!entries) return true;
+
+      const batchSize = config.filesystemConcurrency;
+      for (let offset = 0; offset < entries.length; offset += batchSize) {
+        const batch = entries.slice(offset, offset + batchSize);
+        const stats = await Promise.all(
+          batch.map(async (entry) => {
             const fullPath = path.join(current, entry.name);
-            return stat(fullPath).then((s) => ({ entry, fullPath, stat: s }));
+            try {
+              return {
+                entry,
+                fullPath,
+                stat: await stat(fullPath),
+              };
+            } catch (error) {
+              if (isNodeError(error) && error.code === "ENOENT") return null;
+              throw error;
+            }
           }),
         );
 
         for (const result of stats) {
-          if (result.status === "fulfilled") {
-            const { entry, fullPath, stat: fileStat } = result.value;
-            if (fileStat.mtime > since) return true;
-            if (entry.isDirectory() && (await walk(fullPath))) return true;
+          if (!result) return true;
+          if (result.stat.mtime > since) return true;
+          if (result.entry.isDirectory() && (await walk(result.fullPath))) {
+            return true;
           }
         }
-      } catch {
-        return false;
       }
 
       return false;
     }
 
-    return walk(dir);
+    try {
+      return await walk(dir);
+    } catch (error) {
+      logger.error("Failed to check library for changes", {
+        directory: dir,
+        error,
+      });
+      throw error;
+    }
   }
 }
 

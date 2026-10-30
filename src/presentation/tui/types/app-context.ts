@@ -11,7 +11,7 @@ type ContextValues = {
   scanController: RefObject<AbortController>;
   handleScan: (folder: string) => Promise<void>;
   handleSelectCached: (root: string) => Promise<void>;
-  handleProducerConfirm: (selectedProducers: Set<string>) => Promise<void>;
+  handleProducerConfirm: (selectedProducers: string[]) => Promise<void>;
   handleApplyFromReview: () => void;
 };
 
