@@ -1,5 +1,26 @@
 import { describe, expect, test } from "bun:test";
-import { readPositiveInteger } from "../src/config";
+import { readPositiveInteger, resolveConfigDirectories } from "../src/config";
+
+describe("resolveConfigDirectories", () => {
+  test("uses the XDG config home and app namespace", () => {
+    expect(
+      resolveConfigDirectories(
+        { XDG_CONFIG_HOME: "/tmp/config" },
+        "/home/test",
+      ),
+    ).toEqual({
+      configDir: "/tmp/config/tagwise",
+      producersDir: "/tmp/config/tagwise/producers",
+    });
+  });
+
+  test("falls back to the home config directory", () => {
+    expect(resolveConfigDirectories({}, "/home/test")).toEqual({
+      configDir: "/home/test/.config/tagwise",
+      producersDir: "/home/test/.config/tagwise/producers",
+    });
+  });
+});
 
 describe("readPositiveInteger", () => {
   test("uses the fallback when the variable is unset", () => {

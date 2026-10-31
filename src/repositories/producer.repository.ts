@@ -5,9 +5,7 @@ export class ProducerRepository {
 
   register(producer: Producer): void {
     if (this.producers.has(producer.name)) {
-      console.warn(
-        `Producer "${producer.name}" already registered. Overwriting.`,
-      );
+      throw new Error(`Producer "${producer.name}" is already registered`);
     }
     this.producers.set(producer.name, producer);
   }

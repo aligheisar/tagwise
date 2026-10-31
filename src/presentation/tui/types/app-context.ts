@@ -7,6 +7,10 @@ type ContextValues = {
   operations: UseOperationsReturn;
   screen: Screen;
   setScreen: Dispatch<SetStateAction<Screen>>;
+  helpOpen: boolean;
+  helpShortcutEnabled: boolean;
+  setHelpShortcutEnabled: (enabled: boolean) => void;
+  toggleHelp: () => void;
   abortScan: () => void;
   scanController: RefObject<AbortController>;
   handleScan: (folder: string) => Promise<void>;

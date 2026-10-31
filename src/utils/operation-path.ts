@@ -3,6 +3,8 @@ import type { Operation } from "#/types/operation";
 import { isRenameOperation, isTagUpdateOperation } from "#/utils/is-operation";
 
 function getOperationPath(op: Operation): string {
+  const filePath = op.metadata?.filePath;
+  if (typeof filePath === "string") return filePath;
   if (isRenameOperation(op)) return op.oldPath;
   if (isTagUpdateOperation(op)) return op.path;
   return "";

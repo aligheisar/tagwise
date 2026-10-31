@@ -16,10 +16,12 @@ export function ApplyScreen() {
   const {
     operations: { apply, stats },
     folder,
+    helpOpen,
     setScreen,
   } = useApp();
 
   useKeyboard((key) => {
+    if (helpOpen) return;
     if (applying) return;
 
     if (result) {
@@ -57,7 +59,7 @@ export function ApplyScreen() {
           });
         break;
       case "escape":
-        setScreen({ type: "welcome" });
+        setScreen({ type: "review" });
         break;
       case "q":
         renderer.destroy();
@@ -99,7 +101,9 @@ export function ApplyScreen() {
       <box flexDirection="column" padding={1}>
         {!applying && !result && (
           <text>
-            <span fg={colors.muted}>{"Enter: apply | Esc: cancel"}</span>
+            <span fg={colors.muted}>
+              {"Enter: apply | Esc: back to review"}
+            </span>
           </text>
         )}
 

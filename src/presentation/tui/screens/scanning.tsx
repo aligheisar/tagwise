@@ -4,9 +4,10 @@ import { useApp } from "@/hooks/use-app";
 import { colors } from "@/theme";
 
 export function ScanningScreen() {
-  const { abortScan, folder } = useApp();
+  const { abortScan, folder, helpOpen } = useApp();
 
   useKeyboard((key) => {
+    if (helpOpen) return;
     if (key.name === "escape") {
       abortScan();
     }

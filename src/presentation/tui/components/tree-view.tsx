@@ -1,4 +1,6 @@
-import { getOperationFolder } from "#/utils/operation-path";
+import path from "node:path";
+import type { FileOperationGroup } from "#/lib/operations/operation-state";
+import { getFileOperationGroups } from "#/lib/operations/operation-state";
 import { TreeNode } from "@/components/tree-node";
 import type { OperationState } from "@/hooks/use-operations";
 import { colors } from "@/theme";
@@ -9,11 +11,12 @@ type TreeNodeData = {
   displayName: string;
   children: TreeNodeData[];
   leafChildren: LeafNodeData[];
+  operationCount: number;
 };
 
 type LeafNodeData = {
   type: "leaf";
-  operation: OperationState;
+  group: FileOperationGroup;
 };
 
 type FlatNode =
@@ -42,16 +45,14 @@ export function TreeView({
           return (
             <TreeNode
               depth={item.depth}
+              group={item.node.group}
               isSelected={isSelected}
-              key={item.node.operation.id}
-              operation={item.node.operation}
+              key={item.node.group.id}
             />
           );
         }
 
         const node = item.node;
-        const opCount = node.leafChildren.length;
-
         return (
           <box
             backgroundColor={bgColor}
@@ -65,7 +66,9 @@ export function TreeView({
                 {expandedFolders.has(node.path) ? "▼ " : "▶ "}
               </span>
               <span fg={colors.accent}>{node.displayName}/</span>
-              <span fg={colors.muted}>{` (${opCount} operations)`}</span>
+              <span
+                fg={colors.muted}
+              >{` (${node.operationCount} operations)`}</span>
             </text>
           </box>
         );
@@ -78,24 +81,39 @@ function buildTree(
   operations: OperationState[],
   libraryRoot: string,
 ): TreeNodeData[] {
-  const root: TreeNodeData[] = [];
-  const folderMap = new Map<string, TreeNodeData>();
-
   const normalizedRoot = libraryRoot.endsWith("/")
     ? libraryRoot.slice(0, -1)
     : libraryRoot;
 
-  for (const op of operations) {
-    const fullPath = getOperationFolder(op.operation);
+  const rootFolder: TreeNodeData = {
+    children: [],
+    displayName: normalizedRoot
+      ? (normalizedRoot.split("/").filter(Boolean).at(-1) ?? "/")
+      : "/",
+    leafChildren: [],
+    operationCount: 0,
+    path: normalizedRoot,
+    type: "folder",
+  };
 
-    let relativePath = fullPath;
-    if (normalizedRoot && fullPath.startsWith(normalizedRoot)) {
-      relativePath = fullPath.slice(normalizedRoot.length) || "/";
+  const root: TreeNodeData[] = [rootFolder];
+  const folderMap = new Map<string, TreeNodeData>([
+    [normalizedRoot, rootFolder],
+  ]);
+
+  for (const group of getFileOperationGroups(operations)) {
+    const firstOperation = group.operations[0]?.operation;
+    if (!firstOperation) continue;
+    const groupFolder = path.dirname(group.filePath);
+
+    let relativePath = groupFolder;
+    if (normalizedRoot && groupFolder.startsWith(normalizedRoot)) {
+      relativePath = groupFolder.slice(normalizedRoot.length) || "/";
     }
 
     const parts = relativePath.split("/").filter(Boolean);
 
-    let currentFolders = root;
+    let currentFolders = rootFolder.children;
     let currentPath = normalizedRoot;
 
     for (let i = 0; i < parts.length; i++) {
@@ -108,6 +126,7 @@ function buildTree(
           children: [],
           displayName: part,
           leafChildren: [],
+          operationCount: 0,
           path: currentPath,
           type: "folder",
         };
@@ -117,13 +136,22 @@ function buildTree(
       currentFolders = folder.children;
     }
 
-    const parentFolder = folderMap.get(currentPath);
-    if (parentFolder) {
-      parentFolder.leafChildren.push({ operation: op, type: "leaf" });
-    }
+    const parentFolder = folderMap.get(currentPath) ?? rootFolder;
+    parentFolder.leafChildren.push({ group, type: "leaf" });
   }
 
-  return root;
+  return root.filter(pruneEmptyFolders);
+}
+
+function pruneEmptyFolders(folder: TreeNodeData): boolean {
+  folder.children = folder.children.filter(pruneEmptyFolders);
+  folder.operationCount =
+    folder.leafChildren.reduce(
+      (count, leaf) => count + leaf.group.operations.length,
+      0,
+    ) +
+    folder.children.reduce((count, child) => count + child.operationCount, 0);
+  return folder.operationCount > 0;
 }
 
 function flattenVisible(

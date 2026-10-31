@@ -1,5 +1,5 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScreenInfo } from "#/presentation/tui/components/screen-info";
 import { CachedLibraries } from "@/components/cached-libraries";
 import { ScanFolderInput } from "@/components/scan-folder-input";
@@ -10,11 +10,18 @@ import { colors } from "@/theme";
 export function WelcomeScreen() {
   const renderer = useRenderer();
   const { libraries } = useLibraries();
-  const { handleSelectCached } = useApp();
+  const { handleSelectCached, helpOpen, setHelpShortcutEnabled } = useApp();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [focusMode, setFocusMode] = useState<"cached" | "input">("input");
 
+  useEffect(() => {
+    setHelpShortcutEnabled(focusMode !== "input");
+    return () => setHelpShortcutEnabled(true);
+  }, [focusMode, setHelpShortcutEnabled]);
+
   useKeyboard((key) => {
+    if (helpOpen) return;
+
     switch (key.name) {
       case "q":
         if (focusMode !== "input") renderer.destroy();

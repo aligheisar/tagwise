@@ -8,7 +8,7 @@ import { colors } from "@/theme";
 export function ProducerSelect() {
   const renderer = useRenderer();
   const producers = producerService.getAll();
-  const { handleProducerConfirm } = useApp();
+  const { handleProducerConfirm, helpOpen, setScreen } = useApp();
 
   const [selected, setSelected] = useState<Set<string>>(
     new Set(producers.map((p) => p.name)),
@@ -44,7 +44,12 @@ export function ProducerSelect() {
   };
 
   useKeyboard((key) => {
+    if (helpOpen) return;
+
     switch (key.name) {
+      case "escape":
+        setScreen({ type: "welcome" });
+        break;
       case "q":
         renderer.destroy();
         break;
@@ -135,7 +140,7 @@ export function ProducerSelect() {
         <text>
           <span fg={colors.muted}>
             {
-              "Space: toggle | a: select all | n: deselect all | J/K: reorder | Enter: confirm"
+              "Esc: back | Space: toggle | a: all | n: none | J/K: reorder | Enter: confirm"
             }
           </span>
         </text>

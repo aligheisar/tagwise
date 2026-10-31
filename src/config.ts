@@ -1,6 +1,17 @@
 import os from "node:os";
 import path from "node:path";
 
+function resolveConfigDirectories(
+  env: NodeJS.ProcessEnv = process.env,
+  home = os.homedir(),
+): { configDir: string; producersDir: string } {
+  const configHome = path.resolve(
+    env.XDG_CONFIG_HOME || path.join(home, ".config"),
+  );
+  const configDir = path.join(configHome, "tagwise");
+  return { configDir, producersDir: path.join(configDir, "producers") };
+}
+
 function readPositiveInteger(
   name: string,
   fallback: number,
@@ -23,6 +34,7 @@ const config = {
   cacheDir: path.resolve(
     process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache"),
   ),
+  ...resolveConfigDirectories(),
   filesystemConcurrency: readPositiveInteger(
     "TAGWISE_FILESYSTEM_CONCURRENCY",
     32,
@@ -40,4 +52,4 @@ const config = {
   ),
 };
 
-export { config, readPositiveInteger };
+export { config, readPositiveInteger, resolveConfigDirectories };

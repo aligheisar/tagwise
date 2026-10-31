@@ -1,10 +1,10 @@
-import type { Library } from "#/types/library";
+import type { ReadonlyLibrary } from "#/types/library";
 import type { Operation } from "#/types/operation";
 
 interface Producer {
   description?: string;
   name: string;
-  produce(library: Library): Promise<Operation[]>;
+  produce(library: ReadonlyLibrary): Promise<Operation[]>;
   version?: string;
 }
 
