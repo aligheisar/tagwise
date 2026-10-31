@@ -13,9 +13,13 @@ export class RenamerProducer implements Producer {
 
     for (const item of library.items) {
       if (item.status === "error") continue;
-      if (!item.tags.title?.[0]) continue;
 
-      const title = sanitize(item.tags.title[0].trim());
+      const titleSource = item.tags.title?.[0]?.trim();
+      if (!titleSource) continue;
+
+      const title = sanitize(titleSource);
+      if (!title || title === ".") continue;
+
       const baseName = path.parse(item.path).name;
       if (title === baseName) continue;
 

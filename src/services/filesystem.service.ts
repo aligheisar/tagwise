@@ -9,6 +9,13 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
 
 class FilesystemService {
   async rename(oldPath: string, newPath: string): Promise<void> {
+    if (oldPath === newPath) return;
+
+    const destinationExists = await this.exists(newPath);
+    if (destinationExists) {
+      throw new Error(`Refusing to overwrite existing file: ${newPath}`);
+    }
+
     await rename(oldPath, newPath);
   }
 

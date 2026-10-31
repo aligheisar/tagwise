@@ -1,36 +1,17 @@
 import path from "node:path";
-import type { Operation } from "#/types/operation";
-import { isRenameOperation, isTagUpdateOperation } from "#/utils/is-operation";
-import type { OperationState } from "@/hooks/use-operations";
+import type {
+  FileOperationGroup,
+  OperationStatus,
+} from "#/lib/operations/operation-state";
 import { colors } from "@/theme";
 
 type TreeNodeProps = {
-  operation: OperationState;
+  group: FileOperationGroup;
   isSelected: boolean;
   depth: number;
 };
 
-function formatRenameOp(op: Operation): string {
-  if (isRenameOperation(op)) {
-    const oldName = path.basename(op.oldPath);
-    const newName = path.basename(op.newPath);
-    return `${oldName} → ${newName}`;
-  }
-
-  return "";
-}
-
-function formatTagUpdateOp(op: Operation): string {
-  if (isTagUpdateOperation(op)) {
-    const filename = path.basename(op.path);
-    const tagNames = Object.keys(op.tags).join(", ");
-    return `${filename}  [${tagNames}]`;
-  }
-
-  return "";
-}
-
-function StatusIcon({ status }: { status: OperationState["status"] }) {
+function StatusIcon({ status }: { status: OperationStatus }) {
   switch (status) {
     case "accepted":
       return <span fg={colors.success}>{" ✓ "}</span>;
@@ -41,35 +22,28 @@ function StatusIcon({ status }: { status: OperationState["status"] }) {
   }
 }
 
-function OperationTypeBadge({ type }: { type: Operation["type"] }) {
-  const color = type === "rename" ? colors.accent : colors.purple;
-  const label = type === "rename" ? "rename" : "tag";
-  return (
-    <span bg={colors.bg} fg={color}>
-      {` ${label} `}
-    </span>
-  );
-}
-
-export function TreeNode({ operation, isSelected, depth }: TreeNodeProps) {
+export function TreeNode({ group, isSelected, depth }: TreeNodeProps) {
   const indent = "  ".repeat(depth);
   const bgColor = isSelected ? colors.bgHighlight : undefined;
-  const description =
-    operation.operation.type === "rename"
-      ? formatRenameOp(operation.operation)
-      : formatTagUpdateOp(operation.operation);
+  const producerNames = [
+    ...new Set(
+      group.operations.map(
+        ({ operation }) => operation.metadata?.producerName ?? operation.type,
+      ),
+    ),
+  ];
 
   return (
     <box backgroundColor={bgColor} flexDirection="row" paddingX={1}>
       <text>
         <span fg={colors.muted}>{indent}</span>
-        <StatusIcon status={operation.status} />
-        <OperationTypeBadge type={operation.operation.type} />
+        <StatusIcon status={group.status} />
+        <span fg={colors.fgBright}>{path.basename(group.filePath)}</span>
+        <span fg={colors.muted}>{`  ${producerNames.join(" · ")}`}</span>
+        <span fg={colors.muted}>{`  (${group.operations.length})`}</span>
         <span
-          fg={operation.status === "rejected" ? colors.muted : colors.fgBright}
-        >
-          {` ${description}`}
-        </span>
+          fg={colors.accent}
+        >{`  #${String(group.order + 1).padStart(3, "0")}`}</span>
       </text>
     </box>
   );

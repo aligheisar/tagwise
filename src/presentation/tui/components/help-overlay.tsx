@@ -1,20 +1,10 @@
+import { getHelpShortcuts } from "@/lib/shortcuts";
 import { colors } from "@/theme";
+import type { Screen } from "@/types/screen";
 
-const SHORTCUTS = [
-  { desc: "Navigate down / up", key: "j / k" },
-  { desc: "Collapse / expand folder", key: "h / l" },
-  { desc: "View operation detail", key: "Enter" },
-  { desc: "Toggle accept / reject", key: "Space" },
-  { desc: "Accept all in folder", key: "a" },
-  { desc: "Reject all in folder", key: "r" },
-  { desc: "Accept all operations", key: "A (shift)" },
-  { desc: "Reject all operations", key: "R (shift)" },
-  { desc: "Modify operation", key: "m" },
-  { desc: "Toggle this help", key: "? (shift+/)" },
-  { desc: "Quit", key: "q" },
-];
+export function HelpOverlay({ screen }: { screen: Screen["type"] }) {
+  const shortcuts = getHelpShortcuts(screen);
 
-export function HelpOverlay() {
   return (
     <box
       backgroundColor={colors.bgDark}
@@ -30,37 +20,17 @@ export function HelpOverlay() {
       zIndex={100}
     >
       <text>
-        <span fg={colors.accent}>
-          {"  ╔══════════════════════════════════════╗"}
-        </span>
+        <span fg={colors.accent}>KEYBOARD SHORTCUTS</span>
+        <span fg={colors.muted}>{`  ${screen}`}</span>
       </text>
-      <text>
-        <span fg={colors.accent}>{"  ║"}</span>
-        <span fg={colors.fgBright}>
-          {"         KEYBOARD SHORTCUTS            "}
-        </span>
-        <span fg={colors.accent}>{"║"}</span>
-      </text>
-      <text>
-        <span fg={colors.accent}>
-          {"  ╠══════════════════════════════════════╣"}
-        </span>
-      </text>
-      {SHORTCUTS.map((s) => (
-        <text key={s.key}>
-          <span fg={colors.accent}>{"  ║  "}</span>
-          <span fg={colors.warning}>{s.key.padEnd(14)}</span>
-          <span fg={colors.fg}>{s.desc}</span>
-          <span fg={colors.accent}>{"  ║"}</span>
+      {shortcuts.map((shortcut) => (
+        <text key={shortcut.key}>
+          <span fg={colors.warning}>{shortcut.key.padEnd(14)}</span>
+          <span fg={colors.fg}>{shortcut.description}</span>
         </text>
       ))}
       <text>
-        <span fg={colors.accent}>
-          {"  ╚══════════════════════════════════════╝"}
-        </span>
-      </text>
-      <text>
-        <span fg={colors.muted}>{"                 Press ? to close"}</span>
+        <span fg={colors.muted}>Press Shift+/ to close</span>
       </text>
     </box>
   );

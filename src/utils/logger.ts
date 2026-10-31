@@ -1,4 +1,14 @@
 type LogContext = Record<string, unknown>;
+type LogSink = (line: string) => void;
+
+const stderrSink: LogSink = (line) => {
+  process.stderr.write(line);
+};
+let sink: LogSink = stderrSink;
+
+function setLogSink(nextSink: LogSink | null): void {
+  sink = nextSink ?? stderrSink;
+}
 
 function log(
   level: "error" | "info" | "warn",
@@ -17,7 +27,7 @@ function log(
       : value,
   );
 
-  process.stderr.write(`${output}\n`);
+  sink(`${output}\n`);
 }
 
 const logger = {
@@ -29,4 +39,4 @@ const logger = {
     log("warn", message, context),
 };
 
-export { logger };
+export { logger, setLogSink };

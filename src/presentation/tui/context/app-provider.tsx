@@ -1,12 +1,17 @@
 import { toast } from "@opentui-ui/toast";
-import { type ReactNode, useCallback, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { cacheService } from "#/containers/cache.container";
 import { filesystemService } from "#/containers/filesystem.container";
 import { producerService } from "#/containers/producer.container";
 import { scannerService } from "#/containers/scanner.container";
-import { MutableLibrary } from "#/lib/mutable-library";
 import { normalizeRoot } from "#/repositories/library.repository";
-import type { Operation } from "#/types/operation";
+import { runProducerPipeline } from "#/services/producer-pipeline.service";
 import { logger } from "#/utils/logger";
 import { appContext } from "@/context/app-context";
 import { useOperations } from "@/hooks/use-operations";
@@ -22,6 +27,8 @@ const AppProvider = ({
 }) => {
   const scanController = useRef(new AbortController());
   const [folder, setFolder] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpShortcutEnabled, setHelpShortcutEnabled] = useState(true);
   const [screen, setScreen] = useState<Screen>(
     initialFolder
       ? {
@@ -31,6 +38,10 @@ const AppProvider = ({
   );
 
   const ops = useOperations();
+
+  const toggleHelp = useCallback(() => {
+    setHelpOpen((open) => !open);
+  }, []);
 
   const handleScan = useCallback(async (folder: string) => {
     setFolder(folder);
@@ -61,6 +72,12 @@ const AppProvider = ({
       setScreen({ type: "welcome" });
     }
   }, []);
+
+  useEffect(() => {
+    if (initialFolder) {
+      void handleScan(initialFolder);
+    }
+  }, [handleScan, initialFolder]);
 
   const abortScan = useCallback(async () => {
     scanController.current.abort();
@@ -113,18 +130,18 @@ const AppProvider = ({
           return;
         }
 
-        const mutableLib = new MutableLibrary(library);
-        const allOperations: Operation[] = [];
-        for (const name of selectedProducers) {
-          const producerOperations = await producerService.run(
-            name,
-            mutableLib,
-          );
-          for (const operation of producerOperations) {
-            mutableLib.applyOperation(operation);
-            allOperations.push(operation);
-          }
-        }
+        const availableProducers = new Map(
+          producerService.getAll().map((producer) => [producer.name, producer]),
+        );
+        const orderedProducers = selectedProducers.map((name) => {
+          const producer = availableProducers.get(name);
+          if (!producer) throw new Error(`Unknown producer: ${name}`);
+          return producer;
+        });
+        const { operations: allOperations } = await runProducerPipeline(
+          library,
+          orderedProducers,
+        );
 
         if (allOperations.length === 0) {
           toast("No operations to perform");
@@ -164,10 +181,14 @@ const AppProvider = ({
     handleProducerConfirm,
     handleScan,
     handleSelectCached,
+    helpOpen,
+    helpShortcutEnabled,
     operations: ops,
     scanController,
     screen,
+    setHelpShortcutEnabled,
     setScreen,
+    toggleHelp,
   };
 
   return (

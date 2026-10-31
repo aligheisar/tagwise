@@ -1,4 +1,3 @@
-import sanitize from "sanitize-filename";
 import type { Library } from "#/types/library";
 import type { Operation } from "#/types/operation";
 import type { Producer } from "#/types/producer";
@@ -12,14 +11,18 @@ export class RemoveRemixTagProducer implements Producer {
 
     for (const item of library.items) {
       if (item.status === "error") continue;
-      if (!item.tags.title?.[0]?.trim()) continue;
-      if (!item.tags.title[0].endsWith(" (Remix)")) continue;
+
+      const title = item.tags.title?.[0]?.trim();
+      if (!title?.endsWith(" (Remix)")) continue;
+
+      const updatedTitle = title.replace(/ \(Remix\)$/, "").trim();
+      if (!updatedTitle) continue;
 
       operations.push({
         id: `${this.name}-${item.path}`,
         path: item.path,
         tags: {
-          title: sanitize(item.tags.title[0].trim().replace(" (Remix)", "")),
+          title: updatedTitle,
         },
         type: "tag-update",
       });

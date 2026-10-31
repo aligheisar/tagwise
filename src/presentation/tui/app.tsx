@@ -1,4 +1,8 @@
+import { useKeyboard } from "@opentui/react";
+import type { ReactNode } from "react";
+import { HelpOverlay } from "@/components/help-overlay";
 import { useApp } from "@/hooks/use-app";
+import { isHelpToggleKey } from "@/lib/shortcuts";
 import { ApplyScreen } from "@/screens/apply";
 import { ProducerSelect } from "@/screens/producer-select";
 import { ReviewScreen } from "@/screens/review";
@@ -6,25 +10,37 @@ import { ScanningScreen } from "@/screens/scanning";
 import { WelcomeScreen } from "@/screens/welcome";
 
 export function App() {
-  const { screen } = useApp();
+  const { helpOpen, helpShortcutEnabled, screen, toggleHelp } = useApp();
 
+  useKeyboard((key) => {
+    if (isHelpToggleKey(key, helpShortcutEnabled)) toggleHelp();
+  });
+
+  let screenContent: ReactNode;
   switch (screen.type) {
     case "welcome":
-      return <WelcomeScreen />;
-
+      screenContent = <WelcomeScreen />;
+      break;
     case "scanning":
-      return <ScanningScreen />;
-
+      screenContent = <ScanningScreen />;
+      break;
     case "producer-select":
-      return <ProducerSelect />;
-
+      screenContent = <ProducerSelect />;
+      break;
     case "review":
-      return <ReviewScreen />;
-
+      screenContent = <ReviewScreen />;
+      break;
     case "apply":
-      return <ApplyScreen />;
-
+      screenContent = <ApplyScreen />;
+      break;
     default:
-      return <text>Unknown screen</text>;
+      screenContent = <text>Unknown screen</text>;
   }
+
+  return (
+    <box flexGrow={1}>
+      {screenContent}
+      {helpOpen && <HelpOverlay screen={screen.type} />}
+    </box>
+  );
 }

@@ -1,8 +1,7 @@
+import path from "node:path";
 import { useKeyboard, useRenderer } from "@opentui/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { getOperationFolder } from "#/utils/operation-path";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DetailModal } from "@/components/detail-modal";
-import { HelpOverlay } from "@/components/help-overlay";
 import { StatusBar } from "@/components/status-bar";
 import type { FlatNode } from "@/components/tree-view";
 import { computeVisibleNodes, TreeView } from "@/components/tree-view";
@@ -12,14 +11,11 @@ import { colors } from "@/theme";
 
 export function ReviewScreen() {
   const renderer = useRenderer();
-  const [showHelp, setShowHelp] = useState(false);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(),
-  );
   const {
     operations: {
       select,
-      toggle,
+      toggleGroup,
+      moveGroup,
       operations,
       acceptAll,
       acceptFolder,
@@ -29,21 +25,46 @@ export function ReviewScreen() {
       stats,
     },
     folder,
+    helpOpen,
     setScreen,
   } = useApp();
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() =>
+    folder ? new Set([folder]) : new Set(),
+  );
 
   const visibleNodes: FlatNode[] = useMemo(
     () => computeVisibleNodes(operations, expandedFolders, folder ?? ""),
     [operations, expandedFolders, folder],
   );
 
-  const { clampToRange, cursorIndex, moveUp, moveDown } = useVimNav({
-    totalCount: visibleNodes.length,
-  });
+  const { clampToRange, cursorIndex, moveUp, moveDown, setCursorIndex } =
+    useVimNav({
+      totalCount: visibleNodes.length,
+    });
+  const pendingCursorId = useRef<string | null>(null);
+
+  useEffect(() => {
+    setExpandedFolders((prev) => {
+      if (!folder) return prev;
+      const next = new Set(prev);
+      next.add(folder);
+      return next;
+    });
+  }, [folder]);
 
   useEffect(() => {
     clampToRange();
   }, [clampToRange]);
+
+  useEffect(() => {
+    const operationId = pendingCursorId.current;
+    if (!operationId) return;
+    const nextIndex = visibleNodes.findIndex(
+      (node) => node.type === "leaf" && node.node.group.id === operationId,
+    );
+    if (nextIndex >= 0) setCursorIndex(nextIndex);
+    pendingCursorId.current = null;
+  }, [setCursorIndex, visibleNodes]);
 
   const currentNode = visibleNodes[cursorIndex] ?? null;
 
@@ -61,7 +82,7 @@ export function ReviewScreen() {
 
   const handleI = useCallback(() => {
     if (currentNode?.type === "leaf") {
-      select(currentNode.node.operation.id);
+      select(currentNode.node.group.id);
     }
   }, [currentNode, select]);
 
@@ -71,27 +92,27 @@ export function ReviewScreen() {
 
   const handleSpace = useCallback(() => {
     if (currentNode?.type === "leaf") {
-      toggle(currentNode.node.operation.id);
+      toggleGroup(currentNode.node.group.filePath);
     }
-  }, [currentNode, toggle]);
+  }, [currentNode, toggleGroup]);
 
   const handleA = useCallback(() => {
     if (currentNode?.type === "leaf") {
-      const folder = getOperationFolder(currentNode.node.operation.operation);
+      const folder = path.dirname(currentNode.node.group.filePath);
       acceptFolder(folder);
     }
   }, [currentNode, acceptFolder]);
 
   const handleR = useCallback(() => {
     if (currentNode?.type === "leaf") {
-      const folder = getOperationFolder(currentNode.node.operation.operation);
+      const folder = path.dirname(currentNode.node.group.filePath);
       rejectFolder(folder);
     }
   }, [currentNode, rejectFolder]);
 
   const handleM = useCallback(() => {
     if (currentNode?.type === "leaf") {
-      select(currentNode.node.operation.id);
+      select(currentNode.node.group.id);
     }
   }, [currentNode, select]);
 
@@ -113,13 +134,17 @@ export function ReviewScreen() {
     }
   }, [currentNode, expandedFolders, toggleFolder]);
 
+  const handleMove = useCallback(
+    (direction: -1 | 1) => {
+      if (currentNode?.type !== "leaf") return;
+      pendingCursorId.current = currentNode.node.group.id;
+      moveGroup(currentNode.node.group.filePath, direction);
+    },
+    [currentNode, moveGroup],
+  );
+
   useKeyboard((key) => {
-    if (showHelp) {
-      if (key.name === "slash" && key.shift) {
-        setShowHelp(false);
-      }
-      return;
-    }
+    if (helpOpen) return;
 
     if (selectedId) {
       if (key.name === "escape") {
@@ -130,10 +155,12 @@ export function ReviewScreen() {
 
     switch (key.name) {
       case "j":
-        moveDown();
+        if (key.shift) handleMove(1);
+        else moveDown();
         break;
       case "k":
-        moveUp();
+        if (key.shift) handleMove(-1);
+        else moveUp();
         break;
       case "h":
         handleH();
@@ -162,8 +189,8 @@ export function ReviewScreen() {
       case "m":
         handleM();
         break;
-      case "/":
-        if (key.shift) setShowHelp(true);
+      case "escape":
+        setScreen({ type: "producer-select" });
         break;
       case "q":
         renderer.destroy();
@@ -183,6 +210,8 @@ export function ReviewScreen() {
           <span fg={colors.accent}>[</span>
           <span fg={colors.fgBright}>j/k</span>
           <span fg={colors.muted}>:nav </span>
+          <span fg={colors.fgBright}>J/K</span>
+          <span fg={colors.muted}>:move </span>
           <span fg={colors.fgBright}>h/l</span>
           <span fg={colors.muted}>:fold </span>
           <span fg={colors.fgBright}>Space</span>
@@ -193,6 +222,8 @@ export function ReviewScreen() {
           <span fg={colors.muted}>:folder </span>
           <span fg={colors.fgBright}>A/R</span>
           <span fg={colors.muted}>:all </span>
+          <span fg={colors.fgBright}>Esc</span>
+          <span fg={colors.muted}>:producers </span>
           <span fg={colors.accent}>]</span>
         </text>
       </box>
@@ -209,12 +240,10 @@ export function ReviewScreen() {
 
       {selectedId && currentNode?.type === "leaf" && (
         <DetailModal
+          group={currentNode.node.group}
           onClose={() => select(null)}
-          operation={currentNode.node.operation}
         />
       )}
-
-      {showHelp && <HelpOverlay />}
     </box>
   );
 }
