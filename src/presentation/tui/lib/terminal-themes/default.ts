@@ -51,3 +51,4 @@ export const defaultTheme: Theme = {
     xl: "bold",
   },
 };
+

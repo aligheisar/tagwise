@@ -1,10 +1,13 @@
+import { createInterface } from "node:readline";
 import { Command } from "commander";
+import { config } from "#/config";
 import { cacheService } from "#/containers/cache.container";
 import { producerService } from "#/containers/producer.container";
 import { scannerService } from "#/containers/scanner.container";
 import { MutableLibrary } from "#/lib/mutable-library";
 import { normalizeRoot } from "#/repositories/library.repository";
 import type { CacheService } from "#/services/cache.service";
+import { createProducerFile } from "#/services/producer-scaffold.service";
 
 const COMPLETION_SCRIPT = `#!/bin/bash
 _tagwise_completions() {
@@ -12,7 +15,7 @@ _tagwise_completions() {
   COMPREPLY=()
   cur="\${COMP_WORDS[COMP_CWORD]}"
   prev="\${COMP_WORDS[COMP_CWORD-1]}"
-  commands="scan run cache completion"
+  commands="scan run cache producer completion"
   producers="renamer remix-tag remove-remix-tag"
   cache_subs="list show purge"
 
@@ -28,6 +31,7 @@ _tagwise_completions() {
         run) COMPREPLY=( $(compgen -W "\${producers}" -- \${cur}) ) ;;
         scan) _tagwise_complete_folders "\${cur}" ;;
         cache) COMPREPLY=( $(compgen -W "\${cache_subs}" -- \${cur}) ) ;;
+        producer) COMPREPLY=( $(compgen -W "create" -- \${cur}) ) ;;
       esac
       ;;
     3)
@@ -57,6 +61,50 @@ _tagwise_complete_folders() {
 
 complete -F _tagwise_completions tagwise
 `;
+
+function createLinePrompt() {
+  const interfaceInstance = createInterface({
+    crlfDelay: Infinity,
+    input: process.stdin,
+  });
+  const answers: string[] = [];
+  const waiting: {
+    reject: (error: Error) => void;
+    resolve: (answer: string) => void;
+  }[] = [];
+  let closed = false;
+
+  interfaceInstance.on("line", (answer) => {
+    const next = waiting.shift();
+    if (next) next.resolve(answer);
+    else answers.push(answer);
+  });
+  interfaceInstance.on("close", () => {
+    closed = true;
+    for (const prompt of waiting.splice(0)) {
+      prompt.reject(
+        new Error("Input ended before all producer details were entered"),
+      );
+    }
+  });
+
+  return {
+    close: () => interfaceInstance.close(),
+    question(prompt: string): Promise<string> {
+      process.stdout.write(prompt);
+      const answer = answers.shift();
+      if (answer !== undefined) return Promise.resolve(answer);
+      if (closed) {
+        return Promise.reject(
+          new Error("Input ended before all producer details were entered"),
+        );
+      }
+      return new Promise((resolve, reject) => {
+        waiting.push({ reject, resolve });
+      });
+    },
+  };
+}
 
 async function cacheList(cacheService: CacheService) {
   const result = await cacheService.list();
@@ -181,5 +229,33 @@ export function createCLI(): Command {
       process.stdout.write(COMPLETION_SCRIPT);
     });
 
+  program
+    .command("producer")
+    .description("Create and manage user producers")
+    .command("create")
+    .description("Create a typed user producer module")
+    .action(async () => {
+      const prompts = createLinePrompt();
+      try {
+        const title = (await prompts.question("Producer title: ")).trim();
+        const versionInput = (
+          await prompts.question("Version [1.0.0]: ")
+        ).trim();
+        const description = (await prompts.question("Description: ")).trim();
+        if (!title) throw new Error("Producer title cannot be empty");
+        if (!description) {
+          throw new Error("Producer description cannot be empty");
+        }
+
+        const result = await createProducerFile(
+          config.producersDir,
+          { description, title, version: versionInput || "1.0.0" },
+          producerService.getAll().map((producer) => producer.name),
+        );
+        console.log(`Created producer "${result.name}" at ${result.filePath}`);
+      } finally {
+        prompts.close();
+      }
+    });
   return program;
 }

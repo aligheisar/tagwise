@@ -126,7 +126,9 @@ export function ProducerSelect() {
                   <span fg={isSelected ? colors.success : colors.error}>
                     {isSelected ? "[x] " : "[ ] "}
                   </span>
-                  <span fg={colors.accent}>{producer.name}</span>
+                  <span fg={colors.accent}>
+                    {producer.title ?? producer.name}
+                  </span>
                   <span fg={colors.muted}>
                     {producer.description && ` — ${producer.description}`}
                   </span>

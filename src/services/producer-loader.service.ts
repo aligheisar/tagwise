@@ -23,6 +23,7 @@ function isProducer(value: unknown): value is Producer {
     typeof candidate.produce === "function" &&
     (candidate.description === undefined ||
       typeof candidate.description === "string") &&
+    (candidate.title === undefined || typeof candidate.title === "string") &&
     (candidate.version === undefined || typeof candidate.version === "string")
   );
 }

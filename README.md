@@ -20,6 +20,7 @@ You can also use the CLI directly:
 bun run src/main.ts scan ~/Music
 bun run src/main.ts cache list
 bun run src/main.ts run renamer ~/Music
+bun run src/main.ts producer create
 ```
 
 With no command, Tagwise starts the terminal interface. The TUI lets you scan
@@ -56,6 +57,13 @@ library. Producers run in the selected order, and later producers see the
 projected results of earlier proposals. User producers are trusted local code
 and run in the Tagwise process with its permissions. Invalid modules are
 reported and skipped; built-in and other valid producers remain available.
+
+Run `bun run src/main.ts producer create` to scaffold a producer. The CLI asks
+for its title, version, and description, creates a uniquely named `.ts` file,
+and creates `producer-types.ts` beside the `producers` directory with the full
+song-tag, library, and operation contracts. The small producer file imports
+those types and provides an editable `produce` loop. Fill in the rules and
+return operations to preview.
 
 ## Development
 

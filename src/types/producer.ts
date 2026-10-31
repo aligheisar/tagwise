@@ -5,6 +5,7 @@ interface Producer {
   description?: string;
   name: string;
   produce(library: ReadonlyLibrary): Promise<Operation[]>;
+  title?: string;
   version?: string;
 }
 

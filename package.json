@@ -9,7 +9,7 @@
     "check:fix": "biome check --fix",
     "dev": "bun run --watch src/main.ts",
     "test": "bun run test:unit && bun run test:integration && bun run test:e2e",
-    "test:unit": "bun test tests/config.test.ts tests/path.test.ts tests/logger.test.ts tests/operation-state.test.ts tests/operation-apply.test.ts tests/tui-shortcuts.test.ts",
+    "test:unit": "bun test tests/config.test.ts tests/path.test.ts tests/logger.test.ts tests/operation-state.test.ts tests/operation-apply.test.ts tests/producer-scaffold.test.ts tests/tui-shortcuts.test.ts",
     "test:integration": "bun test tests/filesystem-service.test.ts tests/library-repository.test.ts tests/producer-loader.test.ts tests/producer-pipeline.test.ts",
     "test:e2e": "bun test tests/cli.integration.test.ts",
     "test:coverage": "bun test --coverage",
@@ -34,11 +34,14 @@
     "@opentui-ui/toast": "0.0.5",
     "@opentui/core": "0.4.2",
     "@opentui/react": "0.4.2",
+    "cli-spinners": "3.4.0",
+    "cn": "0.5.1",
     "commander": "15.0.0",
     "opentui-spinner": "0.0.7",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "sanitize-filename": "1.6.4",
+    "shadcn": "4.23.0",
     "taglib-wasm": "1.4.0"
   }
 }
