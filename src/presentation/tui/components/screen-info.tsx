@@ -1,4 +1,5 @@
-import { colors } from "@/theme";
+import { Banner } from "@/components/ui/banner";
+import { useTheme } from "@/hooks/use-theme";
 
 const ScreenInfo = ({
   description,
@@ -7,11 +8,11 @@ const ScreenInfo = ({
   title: string;
   description: string;
 }) => {
+  const { colors } = useTheme();
   return (
-    <box>
-      <text fg={colors.fgBright}>{title.toUpperCase()}</text>
+    <Banner hideIcon title={title.toUpperCase()} variant="neutral">
       <text fg={colors.muted}>{description}</text>
-    </box>
+    </Banner>
   );
 };
 

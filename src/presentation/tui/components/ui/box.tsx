@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
-import { useTheme } from "@/components/ui/theme-provider";
+import type { BoxProps as OpenTuiBoxProps } from "@opentui/react";
 import type { BorderStyle } from "@/components/ui/types";
+import { useTheme } from "@/hooks/use-theme";
 
 export type BorderVariant =
   | "default"
@@ -10,44 +10,24 @@ export type BorderVariant =
   | "error"
   | "warning";
 
-export interface BoxProps {
-  alignItems?: "flex-start" | "center" | "flex-end" | "stretch";
+export type BoxProps = Omit<
+  OpenTuiBoxProps,
+  "border" | "borderColor" | "borderStyle" | "children"
+> & {
   border?: boolean;
+  borderVariant?: BorderVariant;
   borderColor?: string;
   borderStyle?: BorderStyle;
-  borderVariant?: BorderVariant;
-  children?: ReactNode;
-  flexDirection?: "row" | "column" | "row-reverse" | "column-reverse";
-  flexGrow?: number;
-  flexShrink?: number;
-  gap?: number;
-  height?: number | string;
-  justifyContent?:
-    | "flex-start"
-    | "center"
-    | "flex-end"
-    | "space-between"
-    | "space-around"
-    | "space-evenly";
-  marginBottom?: number;
-  marginLeft?: number;
-  marginRight?: number;
-  marginTop?: number;
-  minHeight?: number;
-  minWidth?: number;
-  paddingBottom?: number;
-  paddingLeft?: number;
-  paddingRight?: number;
-  paddingTop?: number;
-  width?: number | string;
-  [key: string]: unknown;
-}
+  children?: OpenTuiBoxProps["children"];
+};
 
 export const Box = ({
   border,
   borderVariant = "default",
   borderColor,
   children,
+  borderStyle,
+  flexDirection = "row",
   ...props
 }: BoxProps) => {
   const theme = useTheme();
@@ -79,10 +59,11 @@ export const Box = ({
 
   return (
     <box
+      border={border}
       borderColor={border ? resolvedBorderColor : undefined}
-      borderStyle={
-        border ? (props.borderStyle ?? theme.border.style) : undefined
-      }
+      borderStyle={border ? (borderStyle ?? theme.border.style) : undefined}
+      flexDirection={flexDirection}
+      {...props}
     >
       {children}
     </box>

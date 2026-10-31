@@ -6,10 +6,11 @@ import { StatusBar } from "@/components/status-bar";
 import type { FlatNode } from "@/components/tree-view";
 import { computeVisibleNodes, TreeView } from "@/components/tree-view";
 import { useApp } from "@/hooks/use-app";
+import { useTheme } from "@/hooks/use-theme";
 import { useVimNav } from "@/hooks/use-vim-nav";
-import { colors } from "@/theme";
 
 export function ReviewScreen() {
+  const { colors } = useTheme();
   const renderer = useRenderer();
   const {
     operations: {
@@ -201,28 +202,28 @@ export function ReviewScreen() {
   return (
     <box flexDirection="column" flexGrow={1}>
       <box
-        backgroundColor={colors.bgDark}
+        backgroundColor={colors.background}
         flexDirection="row"
         justifyContent="space-between"
         paddingX={1}
       >
         <text>
           <span fg={colors.accent}>[</span>
-          <span fg={colors.fgBright}>j/k</span>
+          <span fg={colors.foreground}>j/k</span>
           <span fg={colors.muted}>:nav </span>
-          <span fg={colors.fgBright}>J/K</span>
+          <span fg={colors.foreground}>J/K</span>
           <span fg={colors.muted}>:move </span>
-          <span fg={colors.fgBright}>h/l</span>
+          <span fg={colors.foreground}>h/l</span>
           <span fg={colors.muted}>:fold </span>
-          <span fg={colors.fgBright}>Space</span>
+          <span fg={colors.foreground}>Space</span>
           <span fg={colors.muted}>:toggle </span>
-          <span fg={colors.fgBright}>i</span>
+          <span fg={colors.foreground}>i</span>
           <span fg={colors.muted}>:detail </span>
-          <span fg={colors.fgBright}>a/r</span>
+          <span fg={colors.foreground}>a/r</span>
           <span fg={colors.muted}>:folder </span>
-          <span fg={colors.fgBright}>A/R</span>
+          <span fg={colors.foreground}>A/R</span>
           <span fg={colors.muted}>:all </span>
-          <span fg={colors.fgBright}>Esc</span>
+          <span fg={colors.foreground}>Esc</span>
           <span fg={colors.muted}>:producers </span>
           <span fg={colors.accent}>]</span>
         </text>
@@ -232,6 +233,8 @@ export function ReviewScreen() {
         <TreeView
           cursorIndex={cursorIndex}
           expandedFolders={expandedFolders}
+          libraryRoot={folder ?? ""}
+          operations={operations}
           visibleNodes={visibleNodes}
         />
       </box>

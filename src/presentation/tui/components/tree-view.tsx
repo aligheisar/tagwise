@@ -1,9 +1,8 @@
 import path from "node:path";
 import type { FileOperationGroup } from "#/lib/operations/operation-state";
 import { getFileOperationGroups } from "#/lib/operations/operation-state";
-import { TreeNode } from "@/components/tree-node";
+import { type TreeNode as TermTreeNode, Tree } from "@/components/ui/tree";
 import type { OperationState } from "@/hooks/use-operations";
-import { colors } from "@/theme";
 
 type TreeNodeData = {
   type: "folder";
@@ -27,54 +26,51 @@ type TreeViewProps = {
   visibleNodes: FlatNode[];
   cursorIndex: number;
   expandedFolders: Set<string>;
+  operations: OperationState[];
+  libraryRoot: string;
 };
 
 export function TreeView({
   visibleNodes,
   cursorIndex,
   expandedFolders,
+  operations,
+  libraryRoot,
 }: TreeViewProps) {
+  const tree = buildTree(operations, libraryRoot);
+  const selectedNode = visibleNodes[cursorIndex];
+  const activeKey = selectedNode
+    ? selectedNode.type === "folder"
+      ? selectedNode.node.path
+      : selectedNode.node.group.id
+    : undefined;
+
   return (
-    <box flexDirection="column" flexGrow={1}>
-      {visibleNodes.map((item, index) => {
-        const isSelected = index === cursorIndex;
-        const bgColor = isSelected ? colors.bgHighlight : undefined;
-        const indent = "  ".repeat(item.depth);
-
-        if (item.type === "leaf") {
-          return (
-            <TreeNode
-              depth={item.depth}
-              group={item.node.group}
-              isSelected={isSelected}
-              key={item.node.group.id}
-            />
-          );
-        }
-
-        const node = item.node;
-        return (
-          <box
-            backgroundColor={bgColor}
-            flexDirection="row"
-            key={node.path}
-            paddingX={1}
-          >
-            <text>
-              <span fg={colors.muted}>{indent}</span>
-              <span fg={colors.warning}>
-                {expandedFolders.has(node.path) ? "▼ " : "▶ "}
-              </span>
-              <span fg={colors.accent}>{node.displayName}/</span>
-              <span
-                fg={colors.muted}
-              >{` (${node.operationCount} operations)`}</span>
-            </text>
-          </box>
-        );
-      })}
-    </box>
+    <Tree
+      activeKey={activeKey}
+      expandedKeys={[...expandedFolders]}
+      focused={false}
+      nodes={tree.map(toTermTreeNode)}
+    />
   );
+}
+
+function toTermTreeNode(folder: TreeNodeData): TermTreeNode {
+  const children: TermTreeNode[] = [
+    ...folder.children.map(toTermTreeNode),
+    ...folder.leafChildren.map(({ group }) => ({
+      icon: group.status === "rejected" ? "✗" : "♫",
+      key: group.id,
+      label: `#${String(group.order + 1).padStart(3, "0")} ${path.basename(group.filePath)} — ${group.operations.map(({ operation }) => operation.metadata?.producerName ?? operation.type).join(", ")} (${group.operations.length} operations)`,
+    })),
+  ];
+
+  return {
+    children,
+    icon: "♪",
+    key: folder.path,
+    label: `${folder.displayName}/ (${folder.operationCount} operations)`,
+  };
 }
 
 function buildTree(

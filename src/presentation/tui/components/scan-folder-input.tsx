@@ -11,7 +11,7 @@ import {
 import { logger } from "#/utils/logger";
 import { expandPath } from "#/utils/path";
 import { useApp } from "@/hooks/use-app";
-import { colors } from "@/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && "code" in error;
@@ -71,6 +71,7 @@ const ScanFolderInput = ({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
   const { handleScan } = useApp();
+  const { colors } = useTheme();
 
   const handleInputChange = useCallback(async (value: string) => {
     setInputValue(value);
@@ -146,12 +147,12 @@ const ScanFolderInput = ({
   return (
     <box flexDirection="column" marginBottom={1}>
       <text>
-        <span fg={colors.warning}>{focusMode === "input" ? "▸ " : "  "}</span>
-        <span fg={colors.fgBright}>Scan a new folder:</span>
+        <span fg={colors.accent}>{focusMode === "input" ? "▸ " : "  "}</span>
+        <span fg={colors.foreground}>Scan a new folder:</span>
       </text>
       <box
         border
-        borderColor={focusMode === "input" ? colors.accent : colors.muted}
+        borderColor={focusMode === "input" ? colors.accent : colors.border}
         flexGrow={1}
         paddingX={1}
       >
@@ -165,7 +166,7 @@ const ScanFolderInput = ({
       {suggestions.length > 0 && focusMode === "input" && (
         <box
           border
-          borderColor={colors.muted}
+          borderColor={colors.border}
           flexDirection="column"
           marginTop={0}
           paddingX={1}
@@ -173,10 +174,16 @@ const ScanFolderInput = ({
           {suggestions.map((s, i) => (
             <box key={s}>
               <text>
-                <span fg={colors.muted}>
+                <span fg={colors.secondaryForeground}>
                   {i === suggestionIndex ? "→ " : "  "}
                 </span>
-                <span fg={i === suggestionIndex ? colors.fgBright : colors.fg}>
+                <span
+                  fg={
+                    i === suggestionIndex
+                      ? colors.secondaryForeground
+                      : colors.secondary
+                  }
+                >
                   {s}
                 </span>
               </text>

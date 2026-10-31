@@ -1,7 +1,7 @@
-import { useKeyboard } from "@opentui/react";
 import type { FileOperationGroup } from "#/lib/operations/operation-state";
+import { Modal } from "@/components/ui/modal";
+import { useTheme } from "@/hooks/use-theme";
 import { getOperationChanges } from "@/lib/operation-changes";
-import { colors } from "@/theme";
 
 type DetailModalProps = {
   group: FileOperationGroup;
@@ -9,10 +9,7 @@ type DetailModalProps = {
 };
 
 export function DetailModal({ group, onClose }: DetailModalProps) {
-  useKeyboard((key) => {
-    if (key.name === "escape") onClose();
-  });
-
+  const { colors } = useTheme();
   const borderColor =
     group.status === "accepted"
       ? colors.success
@@ -23,34 +20,39 @@ export function DetailModal({ group, onClose }: DetailModalProps) {
 
   return (
     <box
-      backgroundColor={colors.bgDark}
-      border
-      borderColor={borderColor}
-      flexDirection="column"
       height="70%"
       left="15%"
-      padding={2}
       position="absolute"
       top="15%"
       width="70%"
       zIndex={50}
     >
-      <text>
-        <span fg={borderColor}>{"FILE CHANGES"}</span>
-      </text>
-      <text fg={colors.fgBright}>{group.filePath}</text>
-      {changes.map((change) => (
-        <box flexDirection="column" gap={1} key={change.id}>
-          <text fg={colors.muted}>{change.producer}</text>
-          <text>
-            <span fg={colors.purple}>{`${change.field}: `}</span>
-            <span fg={colors.error}>{change.before}</span>
-            <span fg={colors.muted}> {">"} </span>
-            <span fg={colors.success}>{change.after}</span>
-          </text>
+      <Modal
+        backgroundColor={colors.background}
+        borderColor={borderColor}
+        height="100%"
+        onClose={onClose}
+        open
+        title="FILE CHANGES"
+        width="100%"
+      >
+        <box gap={1}>
+          <text fg={colors.foreground}>{group.filePath}</text>
+          <box gap={1}>
+            {changes.map((change) => (
+              <box flexDirection="column" gap={0} key={change.id}>
+                <text fg={colors.muted}>{change.producer}</text>
+                <text>
+                  <span fg={colors.accent}>{`${change.field}: `}</span>
+                  <span fg={colors.error}>{change.before}</span>
+                  <span fg={colors.muted}> {">"} </span>
+                  <span fg={colors.success}>{change.after}</span>
+                </text>
+              </box>
+            ))}
+          </box>
         </box>
-      ))}
-      <text fg={colors.muted}>Esc: close</text>
+      </Modal>
     </box>
   );
 }
