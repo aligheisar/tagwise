@@ -4,7 +4,6 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "audit:dependencies": "bun audit --audit-level=low",
     "check": "biome check",
     "check:fix": "biome check --fix",
     "dev": "bun run --watch src/main.ts",
