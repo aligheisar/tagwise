@@ -6,12 +6,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { cacheService } from "#/containers/cache.container";
-import { filesystemService } from "#/containers/filesystem.container";
-import { producerService } from "#/containers/producer.container";
-import { scannerService } from "#/containers/scanner.container";
-import { normalizeRoot } from "#/repositories/library.repository";
-import { runProducerPipeline } from "#/services/producer-pipeline.service";
+import {
+  generateOperations,
+  scanLibrary,
+  selectCachedLibrary,
+} from "#/services/tui-workflow.service";
 import { logger } from "#/utils/logger";
 import { appContext } from "@/context/app-context";
 import { useOperations } from "@/hooks/use-operations";
@@ -49,12 +48,11 @@ const AppProvider = ({
 
     try {
       scanController.current = new AbortController();
-      await scannerService.scan(folder, {
-        signal: scanController.current.signal,
-      });
-      const library = await cacheService.get(normalizeRoot(folder));
-      if (!library) {
-        toast("Scan completed but library not found in cache");
+      const result = await scanLibrary(folder, scanController.current.signal);
+
+      if (!result.ok) {
+        if (result.error === "Scan was cancelled") return;
+        toast(result.error);
         setScreen({ type: "welcome" });
         return;
       }
@@ -89,19 +87,15 @@ const AppProvider = ({
   const handleSelectCached = useCallback(
     async (root: string) => {
       try {
-        const library = await cacheService.get(normalizeRoot(root));
-        if (!library) {
-          toast("Cached library not found");
+        const result = await selectCachedLibrary(root);
+
+        if (!result.ok) {
+          toast(result.error);
           return;
         }
 
-        const hasChanges = await filesystemService.hasChangedSince(
-          library.root,
-          library.cachedAt,
-        );
-
-        if (hasChanges) {
-          await handleScan(library.root);
+        if (result.needsRescan) {
+          await handleScan(result.library.root);
           return;
         }
 
@@ -122,39 +116,20 @@ const AppProvider = ({
       if (!folder) return;
 
       try {
-        const library = await cacheService.get(normalizeRoot(folder));
+        const result = await generateOperations(folder, selectedProducers);
 
-        if (!library) {
-          toast("Library not found in cache");
-          setScreen({ type: "welcome" });
-          return;
-        }
-
-        const availableProducers = new Map(
-          producerService.getAll().map((producer) => [producer.name, producer]),
-        );
-        const orderedProducers = selectedProducers.map((name) => {
-          const producer = availableProducers.get(name);
-          if (!producer) throw new Error(`Unknown producer: ${name}`);
-          return producer;
-        });
-        const { operations: allOperations } = await runProducerPipeline(
-          library,
-          orderedProducers,
-        );
-
-        if (allOperations.length === 0) {
-          toast("No operations to perform");
+        if (!result.ok) {
+          toast(result.error);
           setScreen({ type: "welcome" });
           return;
         }
 
         logger.info("Generated operations for review", {
-          count: allOperations.length,
+          count: result.operations.length,
           producers: selectedProducers,
-          root: library.root,
+          root: folder,
         });
-        ops.setRawOperations(allOperations);
+        ops.setRawOperations(result.operations);
         setScreen({ type: "review" });
       } catch (error) {
         logger.error("Could not generate library operations", {

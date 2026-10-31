@@ -3,11 +3,13 @@ import { Command } from "commander";
 import { config } from "#/config";
 import { cacheService } from "#/containers/cache.container";
 import { producerService } from "#/containers/producer.container";
-import { scannerService } from "#/containers/scanner.container";
-import { MutableLibrary } from "#/lib/mutable-library";
-import { normalizeRoot } from "#/repositories/library.repository";
-import type { CacheService } from "#/services/cache.service";
-import { createProducerFile } from "#/services/producer-scaffold.service";
+import {
+  createProducer,
+  formatCacheList,
+  formatCacheShow,
+  runProducer,
+  scanLibrary,
+} from "#/services/cli-workflow.service";
 
 const COMPLETION_SCRIPT = `#!/bin/bash
 _tagwise_completions() {
@@ -106,61 +108,6 @@ function createLinePrompt() {
   };
 }
 
-async function cacheList(cacheService: CacheService) {
-  const result = await cacheService.list();
-
-  if (result.total === 0) {
-    console.log("No cached libraries.");
-    return;
-  }
-
-  console.log(`Cached libraries (${result.total}):\n`);
-
-  for (const lib of result.libraries) {
-    console.log(`  ${lib.root}`);
-    console.log(
-      `    ${lib.itemCount} file(s) (${lib.okCount} ok, ${lib.errorCount} errors)`,
-    );
-    console.log(`    cached at: ${lib.cachedAt.toISOString()}`);
-    console.log();
-  }
-}
-
-async function cacheShow(cacheService: CacheService, folder: string) {
-  const result = await cacheService.show(folder);
-
-  if (!result) {
-    console.error(`No cache found for: ${folder}`);
-    process.exit(1);
-  }
-
-  const okItems = result.items.filter((i) => i.status === "ok");
-  const errorItems = result.items.filter((i) => i.status === "error");
-
-  console.log(`Root:       ${result.root}`);
-  console.log(`Cached at:  ${result.cachedAt.toISOString()}`);
-  console.log(`Total:      ${result.items.length} file(s)`);
-  console.log(`OK:         ${okItems.length}`);
-  console.log(`Errors:     ${errorItems.length}`);
-
-  if (errorItems.length > 0) {
-    console.log("\nErrors:");
-    for (const item of errorItems) {
-      console.log(`  ${item.path}: ${item.error}`);
-    }
-  }
-}
-
-async function cachePurge(cacheService: CacheService, folder?: string) {
-  await cacheService.purge(folder);
-
-  if (folder) {
-    console.log(`Purged cache for: ${folder}`);
-  } else {
-    console.log("Purged all cached libraries.");
-  }
-}
-
 export function createCLI(): Command {
   const program = new Command();
   program
@@ -173,7 +120,7 @@ export function createCLI(): Command {
     .description("Scan a folder and cache the library")
     .argument("<folder>", "Path to the music folder")
     .action(async (folder: string) => {
-      await scannerService.scan(folder);
+      await scanLibrary(folder);
     });
 
   program
@@ -182,19 +129,10 @@ export function createCLI(): Command {
     .argument("<producer>")
     .argument("<folder>", "Path to the music folder")
     .action(async (producer: string, folder: string) => {
-      await scannerService.scan(folder);
-      const library = await cacheService.get(normalizeRoot(folder));
-      if (!library) {
-        throw new Error("Library not found in cache after scan.");
-      }
-
-      const mutableLib = new MutableLibrary(library);
-      const operations = await producerService.run(producer, mutableLib);
+      const operations = await runProducer(folder, producer);
 
       console.log(`Generated ${operations.length} operation(s) for ${folder}:`);
       console.log(JSON.stringify(operations, null, 2));
-
-      for (const op of operations) mutableLib.applyOperation(op);
     });
 
   const cache = program.command("cache").description("Manage cached libraries");
@@ -203,7 +141,8 @@ export function createCLI(): Command {
     .command("list")
     .description("List all cached libraries")
     .action(async () => {
-      await cacheList(cacheService);
+      const formatted = formatCacheList(await cacheService.list());
+      console.log(formatted);
     });
 
   cache
@@ -211,7 +150,9 @@ export function createCLI(): Command {
     .description("Show details of a cached library")
     .argument("<folder>", "Path to the music folder")
     .action(async (folder: string) => {
-      await cacheShow(cacheService, folder);
+      const result = await cacheService.show(folder);
+      const formatted = formatCacheShow(result);
+      console.log(formatted);
     });
 
   cache
@@ -219,7 +160,13 @@ export function createCLI(): Command {
     .description("Delete cached library (all or specific folder)")
     .argument("[folder]", "Path to the music folder (omit to purge all)")
     .action(async (folder?: string) => {
-      await cachePurge(cacheService, folder);
+      await cacheService.purge(folder);
+
+      if (folder) {
+        console.log(`Purged cache for: ${folder}`);
+      } else {
+        console.log("Purged all cached libraries.");
+      }
     });
 
   program
@@ -247,9 +194,13 @@ export function createCLI(): Command {
           throw new Error("Producer description cannot be empty");
         }
 
-        const result = await createProducerFile(
+        const result = await createProducer(
           config.producersDir,
-          { description, title, version: versionInput || "1.0.0" },
+          {
+            description,
+            title,
+            version: versionInput || "1.0.0",
+          },
           producerService.getAll().map((producer) => producer.name),
         );
         console.log(`Created producer "${result.name}" at ${result.filePath}`);

@@ -1,10 +1,11 @@
 import path from "node:path";
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FlatNode } from "#/lib/tree/tree-model";
+import { computeVisibleNodes } from "#/lib/tree/tree-model";
 import { DetailModal } from "@/components/detail-modal";
 import { StatusBar } from "@/components/status-bar";
-import type { FlatNode } from "@/components/tree-view";
-import { computeVisibleNodes, TreeView } from "@/components/tree-view";
+import { TreeView } from "@/components/tree-view";
 import { useApp } from "@/hooks/use-app";
 import { useTheme } from "@/hooks/use-theme";
 import { useVimNav } from "@/hooks/use-vim-nav";

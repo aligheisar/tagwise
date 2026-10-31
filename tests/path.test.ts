@@ -1,10 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { RenamerProducer } from "../src/lib/producers/renamer";
 import { RemixTagProducer } from "../src/lib/producers/remix-tag";
-import {
-  buildTree,
-  computeVisibleNodes,
-} from "../src/presentation/tui/components/tree-view";
+import { buildTree, computeVisibleNodes } from "../src/lib/tree/tree-model";
 import { getOperationChanges } from "../src/presentation/tui/lib/operation-changes";
 import { isPathWithinRoot } from "../src/utils/path";
 

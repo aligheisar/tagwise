@@ -1,14 +1,14 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useMemo, useState } from "react";
-import { producerService } from "#/containers/producer.container";
 import { ScreenInfo } from "@/components/screen-info";
 import { useApp } from "@/hooks/use-app";
+import { useProducers } from "@/hooks/use-producers";
 import { useTheme } from "@/hooks/use-theme";
 
 export function ProducerSelect() {
   const renderer = useRenderer();
   const { colors } = useTheme();
-  const producers = producerService.getAll();
+  const producers = useProducers();
   const { handleProducerConfirm, helpOpen, setScreen } = useApp();
 
   const [selected, setSelected] = useState<Set<string>>(

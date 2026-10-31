@@ -6,8 +6,6 @@ import {
   useReducer,
   useState,
 } from "react";
-import { filesystemService } from "#/containers/filesystem.container";
-import { tagWriterService } from "#/containers/tag-writer.container";
 import type {
   OperationState,
   OperationStatus,
@@ -19,7 +17,10 @@ import {
   getOperationStats,
   operationReviewReducer,
 } from "#/lib/operations/operation-state";
-import { applyOperations } from "#/services/operation-apply.service";
+import {
+  type ApplyOperationsResult,
+  applyReviewedOperations,
+} from "#/services/operation-apply-workflow.service";
 import type { Operation } from "#/types/operation";
 import { getOperationFolder } from "#/utils/operation-path";
 
@@ -41,9 +42,7 @@ type UseOperationsReturn = {
     value: RenameModification | TagUpdateModification,
   ) => void;
   getFolder: (id: string) => string;
-  apply: (
-    root: string,
-  ) => Promise<{ errors: string[]; success: number; failed: number }>;
+  apply: (root: string) => Promise<ApplyOperationsResult>;
   stats: {
     total: number;
     accepted: number;
@@ -118,12 +117,7 @@ export function useOperations(): UseOperationsReturn {
   );
 
   const apply = useCallback(
-    (root: string) =>
-      applyOperations(operations, root, {
-        rename: (oldPath, newPath) =>
-          filesystemService.rename(oldPath, newPath),
-        updateTags: (updates) => tagWriterService.updateTags(updates),
-      }),
+    (root: string) => applyReviewedOperations(operations, root),
     [operations],
   );
 
