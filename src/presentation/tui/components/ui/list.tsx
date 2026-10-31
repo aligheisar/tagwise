@@ -11,10 +11,13 @@ export interface ListItem {
 }
 
 export interface ListProps {
+  activeIndex?: number;
   cursor?: string;
   filterable?: boolean;
+  focused?: boolean;
   height?: number;
   items: ListItem[];
+  onActiveIndexChange?: (index: number) => void;
   onSelect?: (item: ListItem) => void;
 }
 
@@ -22,12 +25,22 @@ export const List = ({
   items,
   onSelect,
   filterable = false,
+  focused = true,
   height = 10,
   cursor = "›",
+  activeIndex: controlledActiveIndex,
+  onActiveIndexChange,
 }: ListProps) => {
   const theme = useTheme();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [internalActiveIndex, setInternalActiveIndex] = useState(0);
   const [filter, setFilter] = useState("");
+  const activeIndex = controlledActiveIndex ?? internalActiveIndex;
+
+  const setActiveIndex = (update: (index: number) => number) => {
+    const next = update(activeIndex);
+    if (controlledActiveIndex === undefined) setInternalActiveIndex(next);
+    onActiveIndexChange?.(next);
+  };
 
   const filtered = useMemo(() => {
     if (!filter) {
@@ -38,10 +51,11 @@ export const List = ({
   }, [items, filter]);
 
   useKeyboard((key) => {
-    if (key.name === "up") {
-      setActiveIndex((i) => Math.max(0, i - 1));
-    } else if (key.name === "down") {
-      setActiveIndex((i) => Math.min(filtered.length - 1, i + 1));
+    if (!focused) return;
+    if (key.name === "up" || key.name === "k") {
+      setActiveIndex((index) => Math.max(0, index - 1));
+    } else if (key.name === "down" || key.name === "j") {
+      setActiveIndex((index) => Math.min(filtered.length - 1, index + 1));
     } else if (key.name === "return") {
       const item = filtered[activeIndex];
       if (item) {
@@ -55,6 +69,8 @@ export const List = ({
       key.name !== "return" &&
       key.name !== "up" &&
       key.name !== "down" &&
+      key.name !== "j" &&
+      key.name !== "k" &&
       key.name.length === 1
     ) {
       setFilter((f) => f + key.name);
@@ -88,7 +104,7 @@ export const List = ({
           <text fg={item.color ?? theme.colors.foreground}>{item.label}</text>
         );
         return (
-          <box gap={1} key={item.key}>
+          <box flexDirection="row" gap={1} key={item.key}>
             <text fg={isActive ? theme.colors.primary : undefined}>
               {isActive ? cursor : " "}
             </text>

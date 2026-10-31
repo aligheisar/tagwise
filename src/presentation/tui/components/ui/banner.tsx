@@ -25,6 +25,7 @@ export interface BannerProps {
   color?: string;
   dismissible?: boolean;
   gap?: number;
+  hideIcon?: boolean;
   icon?: string;
   onDismiss?: () => void;
   title?: string;
@@ -35,6 +36,7 @@ export const Banner = ({
   children,
   variant = "info",
   icon,
+  hideIcon = false,
   title,
   dismissible = false,
   onDismiss,
@@ -86,7 +88,7 @@ export const Banner = ({
         <text fg={variantColor}>{accentChar}</text>
         <box flexDirection="column">
           <box flexDirection="row" gap={1}>
-            <text fg={variantColor}>{resolvedIcon}</text>
+            {!hideIcon && <text fg={variantColor}>{resolvedIcon}</text>}
             {title && (
               <text fg={variantColor}>
                 <b>{`${title}:`}</b>

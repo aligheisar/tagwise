@@ -3,28 +3,28 @@ import type { ReactNode } from "react";
 export type BorderStyle = "single" | "double" | "rounded" | "heavy";
 
 export interface ColorTokens {
+  accent: string;
+  accentForeground: string;
+  background: string;
+  border: string;
+  error: string;
+  errorForeground: string;
+  focusRing: string;
+  foreground: string;
+  info: string;
+  infoForeground: string;
+  muted: string;
+  mutedForeground: string;
   primary: string;
   primaryForeground: string;
   secondary: string;
   secondaryForeground: string;
-  accent: string;
-  accentForeground: string;
+  selection: string;
+  selectionForeground: string;
   success: string;
   successForeground: string;
   warning: string;
   warningForeground: string;
-  error: string;
-  errorForeground: string;
-  info: string;
-  infoForeground: string;
-  background: string;
-  foreground: string;
-  muted: string;
-  mutedForeground: string;
-  border: string;
-  focusRing: string;
-  selection: string;
-  selectionForeground: string;
 }
 
 export interface SpacingTokens {
@@ -38,25 +38,25 @@ export interface SpacingTokens {
 }
 
 export interface TypographyTokens {
-  bold: boolean;
-  sm: string;
   base: string;
+  bold: boolean;
   lg: string;
+  sm: string;
   xl: string;
 }
 
 export interface BorderTokens {
-  style: BorderStyle;
   color: string;
   focusColor: string;
+  style: BorderStyle;
 }
 
 export interface Theme {
-  name: string;
+  border: BorderTokens;
   colors: ColorTokens;
+  name: string;
   spacing: SpacingTokens;
   typography: TypographyTokens;
-  border: BorderTokens;
 }
 
 export interface MotionContextValue {

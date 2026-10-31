@@ -40,7 +40,7 @@ export function App() {
   return (
     <box flexGrow={1}>
       {screenContent}
-      {helpOpen && <HelpOverlay screen={screen.type} />}
+      {helpOpen && <HelpOverlay onClose={toggleHelp} screen={screen.type} />}
     </box>
   );
 }

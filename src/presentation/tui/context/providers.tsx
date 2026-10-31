@@ -1,9 +1,9 @@
 import { Toaster } from "@opentui-ui/toast/react";
 import type { ReactNode } from "react";
-import { ThemeProvider } from "@/providers/theme-provider";
 import { AppProvider } from "@/context/app-provider";
 import { LibrariesProvider } from "@/context/libraries-provider";
 import { defaultTheme } from "@/lib/terminal-themes/default";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 const Providers = ({
   children,

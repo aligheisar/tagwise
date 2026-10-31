@@ -11,11 +11,15 @@ export interface TreeNode {
 }
 
 export interface TreeProps {
+  activeKey?: string;
   collapsedIcon?: string;
   defaultExpanded?: string[];
   expandedIcon?: string;
+  expandedKeys?: string[];
+  focused?: boolean;
   leafIcon?: string;
   nodes: TreeNode[];
+  onExpandedChange?: (keys: string[]) => void;
   onSelect?: (node: TreeNode) => void;
 }
 
@@ -49,35 +53,55 @@ const flattenTree = (
 export const Tree = ({
   nodes,
   onSelect,
+  activeKey,
   defaultExpanded = [],
+  expandedKeys: controlledExpandedKeys,
+  onExpandedChange,
+  focused = true,
   expandedIcon = "▼",
   collapsedIcon = "▶",
   leafIcon = "•",
 }: TreeProps) => {
   const theme = useTheme();
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
+  const [internalExpandedKeys, setInternalExpandedKeys] = useState<Set<string>>(
     new Set(defaultExpanded),
   );
-  const [activeIndex, setActiveIndex] = useState(0);
+  const expandedKeys = useMemo(
+    () => new Set(controlledExpandedKeys ?? internalExpandedKeys),
+    [controlledExpandedKeys, internalExpandedKeys],
+  );
+  const [internalActiveIndex, setInternalActiveIndex] = useState(0);
 
   const flatNodes = useMemo(
     () => flattenTree(nodes, expandedKeys),
     [nodes, expandedKeys],
   );
+  const controlledActiveIndex = activeKey
+    ? flatNodes.findIndex(({ node }) => node.key === activeKey)
+    : -1;
+  const activeIndex =
+    controlledActiveIndex >= 0 ? controlledActiveIndex : internalActiveIndex;
+
+  const updateExpandedKeys = (update: (keys: Set<string>) => Set<string>) => {
+    const next = update(expandedKeys);
+    if (controlledExpandedKeys === undefined) setInternalExpandedKeys(next);
+    onExpandedChange?.([...next]);
+  };
 
   useKeyboard((key) => {
+    if (!focused) return;
     const current = flatNodes[activeIndex];
     if (key.name === "up") {
-      setActiveIndex((i) => Math.max(0, i - 1));
+      setInternalActiveIndex((i) => Math.max(0, i - 1));
     } else if (key.name === "down") {
-      setActiveIndex((i) => Math.min(flatNodes.length - 1, i + 1));
+      setInternalActiveIndex((i) => Math.min(flatNodes.length - 1, i + 1));
     } else if (key.name === "right" || key.name === "space") {
       if (current?.hasChildren && !expandedKeys.has(current.node.key)) {
-        setExpandedKeys((prev) => new Set([...prev, current.node.key]));
+        updateExpandedKeys((prev) => new Set([...prev, current.node.key]));
       }
     } else if (key.name === "left") {
       if (current?.hasChildren && expandedKeys.has(current.node.key)) {
-        setExpandedKeys((prev) => {
+        updateExpandedKeys((prev) => {
           const next = new Set(prev);
           next.delete(current.node.key);
           return next;

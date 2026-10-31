@@ -1,11 +1,12 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
-import { ScreenInfo } from "#/presentation/tui/components/screen-info";
 import { logger } from "#/utils/logger";
+import { ScreenInfo } from "@/components/screen-info";
 import { useApp } from "@/hooks/use-app";
-import { colors } from "@/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 export function ApplyScreen() {
+  const { colors } = useTheme();
   const renderer = useRenderer();
   const [applying, setApplying] = useState(false);
   const [result, setResult] = useState<{
@@ -76,7 +77,9 @@ export function ApplyScreen() {
         />
 
         <box>
-          <text fg={colors.fg}>{`Total operations: ${stats.total}`}</text>
+          <text
+            fg={colors.foreground}
+          >{`Total operations: ${stats.total}`}</text>
           <text fg={colors.success}>{`Will apply: ${stats.accepted}`}</text>
           <text fg={colors.error}>{`Will skip: ${stats.rejected}`}</text>
 

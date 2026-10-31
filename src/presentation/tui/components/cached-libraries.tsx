@@ -1,48 +1,39 @@
+import { List } from "@/components/ui/list";
 import { useLibraries } from "@/hooks/use-libraries";
-import { colors } from "@/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 const CachedLibraries = ({
   focusMode,
   selectedIndex,
+  onActiveIndexChange,
+  onSelect,
 }: {
   focusMode: "cached" | "input";
   selectedIndex: number;
+  onActiveIndexChange: (index: number) => void;
+  onSelect: (root: string) => void;
 }) => {
   const { libraries } = useLibraries();
+  const { colors } = useTheme();
 
   return (
     libraries.length > 0 && (
       <box flexDirection="column">
         <text>
-          <span fg={colors.warning}>
-            {focusMode === "cached" ? "▸ " : "  "}
-          </span>
-          <span fg={colors.fgBright}>Cached Libraries:</span>
+          <span fg={colors.accent}>{focusMode === "cached" ? "▸ " : "  "}</span>
+          <span fg={colors.foreground}>Cached Libraries:</span>
         </text>
-        {libraries.map((lib, i) => (
-          <box key={lib.root} paddingX={2}>
-            <text>
-              <span
-                fg={
-                  i === selectedIndex && focusMode === "cached"
-                    ? colors.success
-                    : colors.muted
-                }
-              >
-                {i === selectedIndex && focusMode === "cached" ? "→ " : "  "}
-              </span>
-              <span
-                fg={
-                  i === selectedIndex && focusMode === "cached"
-                    ? colors.fgBright
-                    : colors.fg
-                }
-              >
-                {lib.root}
-              </span>
-            </text>
-          </box>
-        ))}
+        <List
+          activeIndex={selectedIndex}
+          focused={focusMode === "cached"}
+          items={libraries.map((library) => ({
+            description: `${library.itemCount} files`,
+            key: library.root,
+            label: library.root,
+          }))}
+          onActiveIndexChange={onActiveIndexChange}
+          onSelect={(item) => onSelect(item.key)}
+        />
       </box>
     )
   );

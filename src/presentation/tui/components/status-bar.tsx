@@ -1,5 +1,6 @@
+import { StatusMessage } from "@/components/ui/status-message";
 import type { UseOperationsReturn } from "@/hooks/use-operations";
-import { colors } from "@/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 type StatusBarProps = {
   stats: UseOperationsReturn["stats"];
@@ -7,24 +8,30 @@ type StatusBarProps = {
 };
 
 export function StatusBar({ stats, mode }: StatusBarProps) {
+  const { colors } = useTheme();
+  const theme = useTheme();
   return (
     <box
-      backgroundColor={colors.bgDark}
+      backgroundColor={colors.background}
       flexDirection="row"
       justifyContent="space-between"
       paddingX={1}
     >
-      <text>
-        <span fg={colors.accent}>[</span>
-        <span fg={colors.success}>{stats.accepted} accepted</span>
-        <span fg={colors.accent}> | </span>
-        <span fg={colors.error}>{stats.rejected} rejected</span>
-        <span fg={colors.accent}> | </span>
-        <span fg={colors.warning}>{stats.modified} modified</span>
-        <span fg={colors.accent}> / </span>
-        <span fg={colors.fg}>{stats.total} total</span>
-        <span fg={colors.accent}>]</span>
-      </text>
+      <box flexDirection="row" gap={1}>
+        <StatusMessage variant="success">
+          <text>{`${stats.accepted} accepted`}</text>
+        </StatusMessage>
+        <text fg={theme.colors.border}>|</text>
+        <StatusMessage variant="error">
+          <text>{`${stats.rejected} rejected`}</text>
+        </StatusMessage>
+        <text fg={theme.colors.border}>|</text>
+        <StatusMessage variant="warning">
+          <text>{`${stats.modified} modified`}</text>
+        </StatusMessage>
+        <text fg={theme.colors.border}>/</text>
+        <text fg={colors.foreground}>{`${stats.total} total`}</text>
+      </box>
       <text>
         <span fg={colors.muted}>{mode}</span>
         <span fg={colors.accent}> | </span>

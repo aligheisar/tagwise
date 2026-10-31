@@ -4,23 +4,23 @@ import { useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
 
 export interface SelectOption<T = string> {
-  value: T;
-  label: string;
-  hint?: string;
   disabled?: boolean;
+  hint?: string;
+  label: string;
+  value: T;
 }
 
 export interface SelectProps<T = string> {
-  options: SelectOption<T>[];
-  value?: T;
-  onChange?: (value: T) => void;
-  onSubmit?: (value: T) => void;
-  label?: string;
   cursor?: string;
   cursorColor?: string;
+  label?: string;
+  onChange?: (value: T) => void;
+  onSubmit?: (value: T) => void;
+  options: SelectOption<T>[];
+  value?: T;
 }
 
-export const Select = <T = string,>({
+export const Select = <T = string>({
   options,
   value: controlledValue,
   onChange,
@@ -80,7 +80,7 @@ export const Select = <T = string,>({
           optColor = theme.colors.foreground;
         }
         return (
-          <box key={idx} gap={1}>
+          <box gap={1} key={String(opt.value)}>
             <text fg={isActive ? resolvedCursorColor : undefined}>
               {isActive ? cursor : " "}
             </text>

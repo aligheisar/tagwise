@@ -1,12 +1,11 @@
 import * as React from "react";
-
-import { ThemeContext } from "@/hooks/use-theme";
-import { defaultTheme } from "@/lib/terminal-themes/default";
 import type {
   AutoThemeProviderProps,
   Theme,
   ThemeProviderProps,
 } from "@/components/ui/types";
+import { ThemeContext } from "@/hooks/use-theme";
+import { defaultTheme } from "@/lib/terminal-themes/default";
 
 export type {
   AutoThemeProviderProps,
@@ -55,7 +54,7 @@ export const ThemeProvider = ({
 
   const themeValue = React.useMemo(
     () => ({ setTheme: setCurrentTheme, theme: currentTheme }),
-    [currentTheme]
+    [currentTheme],
   );
 
   return (
@@ -77,7 +76,7 @@ export const AutoThemeProvider = ({
 };
 
 export const createTheme = (
-  overrides: Partial<Theme> & { name: string }
+  overrides: Partial<Theme> & { name: string },
 ): Theme => ({
   ...defaultTheme,
   ...overrides,

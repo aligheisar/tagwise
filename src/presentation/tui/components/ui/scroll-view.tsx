@@ -1,18 +1,18 @@
 import { useKeyboard } from "@opentui/react";
-import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { useMemo, useState } from "react";
 
 import { useTheme } from "@/hooks/use-theme";
 
 export interface ScrollViewProps {
-  height: number;
   children: ReactNode;
   contentHeight?: number;
-  showScrollbar?: boolean;
+  height: number;
   scrollbarColor?: string;
+  showScrollbar?: boolean;
+  thumbChar?: string;
   thumbColor?: string;
   trackChar?: string;
-  thumbChar?: string;
 }
 
 export const ScrollView = ({
@@ -44,7 +44,7 @@ export const ScrollView = ({
       setScrollTop((s) => Math.max(0, s - height));
     } else if (key.name === "pagedown") {
       setScrollTop((s) =>
-        maxScroll > 0 ? Math.min(maxScroll, s + height) : s + height
+        maxScroll > 0 ? Math.min(maxScroll, s + height) : s + height,
       );
     } else if (key.name === "home") {
       setScrollTop(0);
@@ -71,26 +71,30 @@ export const ScrollView = ({
     () =>
       Array.from({ length: height }, (_, i) => {
         const isThumb = i >= thumbPosition && i < thumbPosition + thumbSize;
-        return { char: isThumb ? thumbChar : trackChar, isThumb };
+        return {
+          char: isThumb ? thumbChar : trackChar,
+          isThumb,
+          key: `${isThumb ? "thumb" : "track"}-${i}`,
+        };
       }),
-    [height, thumbPosition, thumbSize, thumbChar, trackChar]
+    [height, thumbPosition, thumbSize, thumbChar, trackChar],
   );
 
   return (
     <box flexDirection="row" height={height} overflow="hidden">
       <box
-        flexGrow={1}
         flexDirection="column"
+        flexGrow={1}
         marginTop={-clampedScroll as number}
       >
         {children}
       </box>
       {showScrollbar && (
-        <box width={1} flexDirection="column">
-          {scrollbar.map((seg, i) => (
+        <box flexDirection="column" width={1}>
+          {scrollbar.map((seg) => (
             <text
-              key={i}
               fg={seg.isThumb ? resolvedThumbColor : resolvedTrackColor}
+              key={seg.key}
             >
               {seg.char}
             </text>

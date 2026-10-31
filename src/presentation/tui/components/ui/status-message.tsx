@@ -63,7 +63,7 @@ export const StatusMessage = ({
           {icon ?? ICONS[variant as Exclude<StatusVariant, "loading">]}
         </text>
       )}
-      <box>{children}</box>
+      {children}
     </box>
   );
 };

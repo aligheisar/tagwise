@@ -1,18 +1,17 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useEffect, useState } from "react";
-import { ScreenInfo } from "#/presentation/tui/components/screen-info";
 import { CachedLibraries } from "@/components/cached-libraries";
 import { ScanFolderInput } from "@/components/scan-folder-input";
+import { ScreenInfo } from "@/components/screen-info";
 import { useApp } from "@/hooks/use-app";
-import { useLibraries } from "@/hooks/use-libraries";
-import { colors } from "@/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 export function WelcomeScreen() {
+  const { colors } = useTheme();
   const renderer = useRenderer();
-  const { libraries } = useLibraries();
   const { handleSelectCached, helpOpen, setHelpShortcutEnabled } = useApp();
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [focusMode, setFocusMode] = useState<"cached" | "input">("input");
+  const [focusMode, setFocusMode] = useState<"cached" | "input">("cached");
 
   useEffect(() => {
     setHelpShortcutEnabled(focusMode !== "input");
@@ -29,26 +28,6 @@ export function WelcomeScreen() {
       case "tab":
         setFocusMode("input");
         break;
-      case "up":
-        setSelectedIndex((prev) => Math.max(0, prev - 1));
-        break;
-      case "k":
-        setSelectedIndex((prev) => Math.max(0, prev - 1));
-        break;
-      case "down":
-        setSelectedIndex((prev) => Math.min(libraries.length - 1, prev + 1));
-        break;
-      case "j":
-        setSelectedIndex((prev) => Math.min(libraries.length - 1, prev + 1));
-        break;
-      case "return": {
-        if (focusMode !== "cached") return;
-        if (libraries.length > 0) {
-          const selected = libraries[selectedIndex];
-          if (selected) handleSelectCached(selected.root);
-        }
-        break;
-      }
     }
   });
 
@@ -60,7 +39,12 @@ export function WelcomeScreen() {
           title="tagwise tui"
         />
 
-        <CachedLibraries focusMode={focusMode} selectedIndex={selectedIndex} />
+        <CachedLibraries
+          focusMode={focusMode}
+          onActiveIndexChange={setSelectedIndex}
+          onSelect={handleSelectCached}
+          selectedIndex={selectedIndex}
+        />
         <ScanFolderInput focusMode={focusMode} setFocusMode={setFocusMode} />
       </box>
 

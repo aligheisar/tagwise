@@ -1,12 +1,13 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useMemo, useState } from "react";
 import { producerService } from "#/containers/producer.container";
-import { ScreenInfo } from "#/presentation/tui/components/screen-info";
+import { ScreenInfo } from "@/components/screen-info";
 import { useApp } from "@/hooks/use-app";
-import { colors } from "@/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 export function ProducerSelect() {
   const renderer = useRenderer();
+  const { colors } = useTheme();
   const producers = producerService.getAll();
   const { handleProducerConfirm, helpOpen, setScreen } = useApp();
 
@@ -113,23 +114,25 @@ export function ProducerSelect() {
             const isCursor = i === cursorIndex;
             return (
               <box
-                backgroundColor={isCursor ? colors.bgHighlight : undefined}
+                backgroundColor={isCursor ? colors.selection : undefined}
                 flexDirection="row"
                 key={producer.name}
                 paddingX={2}
                 paddingY={0}
               >
                 <text>
-                  <span fg={isCursor ? colors.warning : colors.muted}>
-                    {isCursor ? "→ " : "  "}
+                  <span fg={colors.selectionForeground}>
+                    {isCursor ? "› " : "  "}
                   </span>
                   <span fg={isSelected ? colors.success : colors.error}>
                     {isSelected ? "[x] " : "[ ] "}
                   </span>
-                  <span fg={colors.accent}>
+                  <span
+                    fg={isCursor ? colors.selectionForeground : colors.accent}
+                  >
                     {producer.title ?? producer.name}
                   </span>
-                  <span fg={colors.muted}>
+                  <span fg={isCursor ? colors.mutedForeground : colors.muted}>
                     {producer.description && ` — ${producer.description}`}
                   </span>
                 </text>
