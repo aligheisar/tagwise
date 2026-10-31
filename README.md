@@ -75,9 +75,4 @@ bun run test:e2e
 bun run test:coverage
 bun run typecheck
 bun run check
-bun run audit:dependencies
 ```
-
-`bun run audit:dependencies` checks installed dependencies for known advisories
-at every severity. Run it regularly and update affected dependencies
-when compatible fixes are available.
