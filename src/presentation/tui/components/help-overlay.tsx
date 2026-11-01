@@ -25,7 +25,7 @@ export function HelpOverlay({
       <Modal
         backgroundColor={colors.background}
         borderColor={colors.accent}
-        closeHint="Shift+/ | q to close"
+        closeHint="Shift+/ | Esc to close"
         height="100%"
         onClose={onClose}
         open
