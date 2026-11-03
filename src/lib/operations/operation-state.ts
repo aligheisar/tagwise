@@ -210,13 +210,16 @@ function operationReviewReducer(
     case "accept-folder":
     case "reject-folder": {
       const status = action.type === "accept-folder" ? "accepted" : "rejected";
+      const folder = action.folder;
       return {
         ...state,
-        operations: state.operations.map((operation) =>
-          getOperationFolder(operation.operation) === action.folder
-            ? { ...operation, status }
-            : operation,
-        ),
+        operations: state.operations.map((operation) => {
+          const opFolder = getOperationFolder(operation.operation);
+          // Cascade: match operations in the folder or any subfolder
+          const isCascade =
+            opFolder === folder || opFolder.startsWith(`${folder}/`);
+          return isCascade ? { ...operation, status } : operation;
+        }),
       };
     }
     case "modify":

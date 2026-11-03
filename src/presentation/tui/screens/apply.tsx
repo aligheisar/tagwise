@@ -1,5 +1,6 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useState } from "react";
+import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
 import { logger } from "#/utils/logger";
 import { ScreenInfo } from "@/components/screen-info";
 import { useApp } from "@/hooks/use-app";
@@ -16,10 +17,10 @@ export function ApplyScreen() {
   } | null>(null);
   const {
     operations: { apply, stats },
-    folder,
     helpOpen,
     setScreen,
   } = useApp();
+  const { currentRoot: folder } = useLibraries();
 
   useKeyboard((key) => {
     if (helpOpen) return;

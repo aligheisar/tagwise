@@ -3,6 +3,7 @@ import { useKeyboard, useRenderer } from "@opentui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FlatNode } from "#/lib/tree/tree-model";
 import { computeVisibleNodes } from "#/lib/tree/tree-model";
+import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
 import { DetailModal } from "@/components/detail-modal";
 import { StatusBar } from "@/components/status-bar";
 import { TreeView } from "@/components/tree-view";
@@ -26,10 +27,11 @@ export function ReviewScreen() {
       selectedId,
       stats,
     },
-    folder,
     helpOpen,
     setScreen,
   } = useApp();
+  const { currentRoot: folder } = useLibraries();
+
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() =>
     folder ? new Set([folder]) : new Set(),
   );
@@ -119,13 +121,36 @@ export function ReviewScreen() {
   }, [currentNode, select]);
 
   const handleH = useCallback(() => {
+    if (!currentNode) return;
+
+    // If current node is an expanded folder, collapse it
     if (
-      currentNode?.type === "folder" &&
+      currentNode.type === "folder" &&
       expandedFolders.has(currentNode.node.path)
     ) {
       toggleFolder(currentNode.node.path);
+      return;
     }
-  }, [currentNode, expandedFolders, toggleFolder]);
+
+    // Find the nearest open folder above and collapse it, then move selection to it
+    for (let i = cursorIndex - 1; i >= 0; i--) {
+      const node = visibleNodes[i];
+      if (node?.type === "folder" && node.depth < currentNode.depth) {
+        if (expandedFolders.has(node.node.path)) {
+          toggleFolder(node.node.path);
+          setCursorIndex(i);
+          break;
+        }
+      }
+    }
+  }, [
+    currentNode,
+    setCursorIndex,
+    cursorIndex,
+    expandedFolders,
+    toggleFolder,
+    visibleNodes,
+  ]);
 
   const handleL = useCallback(() => {
     if (
