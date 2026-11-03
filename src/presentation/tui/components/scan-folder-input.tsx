@@ -1,11 +1,6 @@
 import { useKeyboard } from "@opentui/react";
 import { toast } from "@opentui-ui/toast";
-import {
-  type Dispatch,
-  type SetStateAction,
-  useCallback,
-  useState,
-} from "react";
+import { useCallback, useState } from "react";
 import {
   getFolderSuggestions,
   validateFolder,
@@ -17,10 +12,10 @@ import { useTheme } from "@/hooks/use-theme";
 
 const ScanFolderInput = ({
   focusMode,
-  setFocusMode,
+  onBlur,
 }: {
   focusMode: "cached" | "input";
-  setFocusMode: Dispatch<SetStateAction<"cached" | "input">>;
+  onBlur?: () => void;
 }) => {
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -49,7 +44,7 @@ const ScanFolderInput = ({
             return;
           }
 
-          setFocusMode("cached");
+          onBlur?.();
           return;
         case "up":
         case "p":
