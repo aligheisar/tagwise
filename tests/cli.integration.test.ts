@@ -41,6 +41,24 @@ async function runCli(
 }
 
 describe("CLI library cache workflow", () => {
+  test("shows Optique help and generates shell completion", async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(os.tmpdir(), "tagwise-cli-help-test-"),
+    );
+    const cacheDirectory = path.join(temporaryDirectory, "cache");
+
+    const help = await runCli(["--help"], cacheDirectory);
+    expect(help.exitCode).toBe(0);
+    expect(help.stdout).toContain("Music library tag management tool");
+    expect(help.stdout).toContain("--completion SHELL");
+    expect(help.stderr).toBe("");
+
+    const completion = await runCli(["--completion", "bash"], cacheDirectory);
+    expect(completion.exitCode).toBe(0);
+    expect(completion.stdout).toContain("function _tagwise");
+    expect(completion.stderr).toBe("");
+  });
+
   test("scans a folder and lists its cached library", async () => {
     temporaryDirectory = await mkdtemp(
       path.join(os.tmpdir(), "tagwise-cli-test-"),
