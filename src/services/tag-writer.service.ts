@@ -1,3 +1,4 @@
+import "./taglib-runtime.service";
 import { updateFolderTags } from "taglib-wasm/folder";
 import { config } from "#/config";
 import { logger } from "#/utils/logger";

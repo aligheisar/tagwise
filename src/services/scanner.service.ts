@@ -1,3 +1,4 @@
+import "./taglib-runtime.service";
 import { stat } from "node:fs/promises";
 import { type FolderScanOptions, scanFolder } from "taglib-wasm/folder";
 
