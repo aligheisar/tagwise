@@ -1,11 +1,13 @@
 import "opentui-spinner/react";
 import { useKeyboard } from "@opentui/react";
+import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
 import { useApp } from "@/hooks/use-app";
 import { useTheme } from "@/hooks/use-theme";
 
 export function ScanningScreen() {
   const { colors } = useTheme();
-  const { abortScan, folder, helpOpen } = useApp();
+  const { abortScan, helpOpen } = useApp();
+  const { currentRoot: folder } = useLibraries();
 
   useKeyboard((key) => {
     if (helpOpen) return;

@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
 import {
   generateOperations,
   scanLibrary,
@@ -25,7 +26,6 @@ const AppProvider = ({
   initialFolder?: string;
 }) => {
   const scanController = useRef(new AbortController());
-  const [folder, setFolder] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpShortcutEnabled, setHelpShortcutEnabled] = useState(true);
   const [screen, setScreen] = useState<Screen>(
@@ -37,39 +37,51 @@ const AppProvider = ({
   );
 
   const ops = useOperations();
+  const {
+    revalidate: revalidateLibraries,
+    selectLibrary,
+    currentRoot,
+    clearLibrary,
+  } = useLibraries();
 
   const toggleHelp = useCallback(() => {
     setHelpOpen((open) => !open);
   }, []);
 
-  const handleScan = useCallback(async (folder: string) => {
-    setFolder(folder);
-    setScreen({ type: "scanning" });
+  const handleScan = useCallback(
+    async (folder: string) => {
+      setScreen({ type: "scanning" });
 
-    try {
-      scanController.current = new AbortController();
-      const result = await scanLibrary(folder, scanController.current.signal);
+      try {
+        scanController.current = new AbortController();
+        const result = await scanLibrary(folder, scanController.current.signal);
 
-      if (!result.ok) {
-        if (result.error === "Scan was cancelled") return;
-        toast(result.error);
+        if (!result.ok) {
+          if (result.error === "Scan was cancelled") return;
+          toast(result.error);
+          setScreen({ type: "welcome" });
+          return;
+        }
+
+        selectLibrary(folder);
+        setScreen({ type: "producer-select" });
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        logger.error("Scan failed in the terminal interface", {
+          error: err,
+          root: folder,
+        });
+        toast(
+          `Scan failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+        );
+        clearLibrary();
         setScreen({ type: "welcome" });
-        return;
+      } finally {
+        await revalidateLibraries();
       }
-
-      setScreen({ type: "producer-select" });
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      logger.error("Scan failed in the terminal interface", {
-        error: err,
-        root: folder,
-      });
-      toast(
-        `Scan failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
-      setScreen({ type: "welcome" });
-    }
-  }, []);
+    },
+    [revalidateLibraries, selectLibrary, clearLibrary],
+  );
 
   useEffect(() => {
     if (initialFolder) {
@@ -80,9 +92,9 @@ const AppProvider = ({
   const abortScan = useCallback(async () => {
     scanController.current.abort();
     scanController.current = new AbortController();
-    setFolder(null);
+    clearLibrary();
     setScreen({ type: "welcome" });
-  }, []);
+  }, [clearLibrary]);
 
   const handleSelectCached = useCallback(
     async (root: string) => {
@@ -99,7 +111,7 @@ const AppProvider = ({
           return;
         }
 
-        setFolder(root);
+        selectLibrary(root);
         setScreen({ type: "producer-select" });
       } catch (error) {
         logger.error("Could not load cached library", { error, root });
@@ -108,18 +120,19 @@ const AppProvider = ({
         );
       }
     },
-    [handleScan],
+    [handleScan, selectLibrary],
   );
 
   const handleProducerConfirm = useCallback(
     async (selectedProducers: string[]) => {
-      if (!folder) return;
+      if (!currentRoot) return;
 
       try {
-        const result = await generateOperations(folder, selectedProducers);
+        const result = await generateOperations(currentRoot, selectedProducers);
 
         if (!result.ok) {
           toast(result.error);
+          clearLibrary();
           setScreen({ type: "welcome" });
           return;
         }
@@ -127,14 +140,14 @@ const AppProvider = ({
         logger.info("Generated operations for review", {
           count: result.operations.length,
           producers: selectedProducers,
-          root: folder,
+          root: currentRoot,
         });
         ops.setRawOperations(result.operations);
         setScreen({ type: "review" });
       } catch (error) {
         logger.error("Could not generate library operations", {
           error,
-          root: folder,
+          root: currentRoot,
         });
         toast(
           `Could not generate operations: ${error instanceof Error ? error.message : String(error)}`,
@@ -142,7 +155,7 @@ const AppProvider = ({
         setScreen({ type: "welcome" });
       }
     },
-    [folder, ops.setRawOperations],
+    [currentRoot, ops.setRawOperations, clearLibrary],
   );
 
   const handleApplyFromReview = useCallback(() => {
@@ -151,7 +164,6 @@ const AppProvider = ({
 
   const contextValues: ContextValues = {
     abortScan,
-    folder,
     handleApplyFromReview,
     handleProducerConfirm,
     handleScan,

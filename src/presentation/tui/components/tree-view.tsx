@@ -4,16 +4,18 @@ import {
   type FlatNode,
   type TreeNodeData,
 } from "#/lib/tree/tree-model";
+import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
+import type { Library } from "#/types/library";
 import { type TreeNode as TermTreeNode, Tree } from "@/components/ui/tree";
 import type { OperationState } from "@/hooks/use-operations";
 
-type TreeViewProps = {
-  visibleNodes: FlatNode[];
+interface TreeViewProps {
   cursorIndex: number;
   expandedFolders: Set<string>;
-  operations: OperationState[];
   libraryRoot: string;
-};
+  operations: OperationState[];
+  visibleNodes: FlatNode[];
+}
 
 export function TreeView({
   visibleNodes,
@@ -22,6 +24,7 @@ export function TreeView({
   operations,
   libraryRoot,
 }: TreeViewProps) {
+  const { currentLibrary: library } = useLibraries();
   const tree = buildTree(operations, libraryRoot);
   const selectedNode = visibleNodes[cursorIndex];
   const activeKey = selectedNode
@@ -35,19 +38,36 @@ export function TreeView({
       activeKey={activeKey}
       expandedKeys={[...expandedFolders]}
       focused={false}
-      nodes={tree.map(toTermTreeNode)}
+      nodes={tree.map((node) => toTermTreeNode(node, library))}
     />
   );
 }
 
-function toTermTreeNode(folder: TreeNodeData): TermTreeNode {
+function toTermTreeNode(
+  folder: TreeNodeData,
+  library: Library | null,
+): TermTreeNode {
   const children: TermTreeNode[] = [
-    ...folder.children.map(toTermTreeNode),
-    ...folder.leafChildren.map(({ group }) => ({
-      icon: group.status === "rejected" ? "✗" : "♫",
-      key: group.id,
-      label: `#${String(group.order + 1).padStart(3, "0")} ${path.basename(group.filePath)} — ${group.operations.map(({ operation }) => operation.metadata?.producerName ?? operation.type).join(", ")} (${group.operations.length} operations)`,
-    })),
+    ...folder.children.map((node) => toTermTreeNode(node, library)),
+    ...folder.leafChildren.map(({ group }) => {
+      const item = library?.items.find(
+        (i) => i.path === group.filePath && i.status === "ok",
+      );
+      const title =
+        item?.status === "ok" && item.tags.title?.[0]
+          ? item.tags.title[0]
+          : path.basename(group.filePath);
+      const producers = group.operations.map(
+        ({ operation }) => operation.metadata?.producerName ?? operation.type,
+      );
+      const index = `#${String(group.order + 1).padStart(3, "0")}`;
+
+      return {
+        icon: group.status === "rejected" ? "✗" : "♫",
+        key: group.id,
+        label: `${title} — ${producers.join(", ")} (${index})`,
+      };
+    }),
   ];
 
   return {

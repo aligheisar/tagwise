@@ -3,7 +3,6 @@ import type { UseOperationsReturn } from "@/hooks/use-operations";
 import type { Screen } from "@/types/screen";
 
 type ContextValues = {
-  folder: string | null;
   operations: UseOperationsReturn;
   screen: Screen;
   setScreen: Dispatch<SetStateAction<Screen>>;
