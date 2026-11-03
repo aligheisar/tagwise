@@ -1,9 +1,14 @@
-import { createInterface } from "node:readline";
 import { object, or } from "@optique/core/constructs";
 import { message } from "@optique/core/message";
-import { optional } from "@optique/core/modifiers";
+import { optional, withDefault } from "@optique/core/modifiers";
 import type { InferValue } from "@optique/core/parser";
-import { argument, command, constant } from "@optique/core/primitives";
+import {
+  argument,
+  command,
+  constant,
+  flag,
+  option,
+} from "@optique/core/primitives";
 import { string } from "@optique/core/valueparser";
 import { path } from "@optique/run/valueparser";
 import { config } from "#/config";
@@ -17,52 +22,14 @@ import {
   scanLibrary,
 } from "#/services/cli-workflow.service";
 
-function createLinePrompt() {
-  const interfaceInstance = createInterface({
-    crlfDelay: Infinity,
-    input: process.stdin,
-  });
-  const answers: string[] = [];
-  const waiting: {
-    reject: (error: Error) => void;
-    resolve: (answer: string) => void;
-  }[] = [];
-  let closed = false;
-
-  interfaceInstance.on("line", (answer) => {
-    const next = waiting.shift();
-    if (next) next.resolve(answer);
-    else answers.push(answer);
-  });
-  interfaceInstance.on("close", () => {
-    closed = true;
-    for (const prompt of waiting.splice(0)) {
-      prompt.reject(
-        new Error("Input ended before all producer details were entered"),
-      );
-    }
-  });
-
-  return {
-    close: () => interfaceInstance.close(),
-    question(prompt: string): Promise<string> {
-      process.stdout.write(prompt);
-      const answer = answers.shift();
-      if (answer !== undefined) return Promise.resolve(answer);
-      if (closed) {
-        return Promise.reject(
-          new Error("Input ended before all producer details were entered"),
-        );
-      }
-      return new Promise((resolve, reject) => {
-        waiting.push({ reject, resolve });
-      });
-    },
-  };
-}
-
 export function createCLI() {
   return or(
+    object({
+      command: constant("version"),
+      version: flag("-v", "--version", {
+        description: message`Show version information`,
+      }),
+    }),
     command(
       "scan",
       object({
@@ -121,9 +88,25 @@ export function createCLI() {
     ),
     command(
       "producer",
-      command("create", object({ command: constant("producer create") }), {
-        description: message`Create a typed user producer module`,
-      }),
+      command(
+        "create",
+        object({
+          command: constant("producer create"),
+          description: option("--description", string({ metavar: "TEXT" }), {
+            description: message`Describe what the producer does`,
+          }),
+          producerVersion: withDefault(
+            option("--producer-version", string({ metavar: "VERSION" }), {
+              description: message`Producer version`,
+            }),
+            "1.0.0",
+          ),
+          title: option("--title", string({ metavar: "TITLE" }), {
+            description: message`Producer title`,
+          }),
+        }),
+        { description: message`Create a typed user producer module` },
+      ),
       { description: message`Create and manage user producers` },
     ),
     optional(argument(path())),
@@ -137,6 +120,9 @@ type CLICommand = Exclude<
 
 export async function executeCLICommand(invocation: CLICommand): Promise<void> {
   switch (invocation.command) {
+    case "version":
+      process.stdout.write("0.1.0\n");
+      break;
     case "scan":
       await scanLibrary(invocation.folder);
       break;
@@ -167,33 +153,18 @@ export async function executeCLICommand(invocation: CLICommand): Promise<void> {
       );
       break;
     case "producer create": {
-      const prompts = createLinePrompt();
-      try {
-        const title = (await prompts.question("Producer title: ")).trim();
-        const versionInput = (
-          await prompts.question("Version [1.0.0]: ")
-        ).trim();
-        const description = (await prompts.question("Description: ")).trim();
-        if (!title) throw new Error("Producer title cannot be empty");
-        if (!description) {
-          throw new Error("Producer description cannot be empty");
-        }
-
-        const result = await createProducer(
-          config.producersDir,
-          {
-            description,
-            title,
-            version: versionInput || "1.0.0",
-          },
-          producerService.getAll().map((producer) => producer.name),
-        );
-        process.stdout.write(
-          `Created producer "${result.name}" at ${result.filePath}\n`,
-        );
-      } finally {
-        prompts.close();
-      }
+      const result = await createProducer(
+        config.producersDir,
+        {
+          description: invocation.description.trim(),
+          title: invocation.title.trim(),
+          version: invocation.producerVersion.trim() || "1.0.0",
+        },
+        producerService.getAll().map((producer) => producer.name),
+      );
+      process.stdout.write(
+        `Created producer "${result.name}" at ${result.filePath}\n`,
+      );
       break;
     }
   }

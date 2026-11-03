@@ -8,11 +8,10 @@ import { expandPath } from "#/utils/path";
 async function main() {
   const invocation = await run(createCLI(), {
     brief: message`Music library tag management tool`,
-    completion: "option",
-    help: "option",
+    completion: "both",
+    help: { option: { names: ["-h", "--help"] } },
     programName: "tagwise",
     termWidth: "auto",
-    version: "0.1.0",
   });
 
   if (typeof invocation === "string" || invocation === undefined) {
