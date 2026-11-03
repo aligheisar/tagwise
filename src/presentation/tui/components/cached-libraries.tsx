@@ -17,12 +17,12 @@ const CachedLibraries = ({
   const { colors } = useTheme();
 
   return (
-    libraries.length > 0 && (
-      <box flexDirection="column">
-        <text>
-          <span fg={colors.accent}>{focusMode === "cached" ? "▸ " : "  "}</span>
-          <span fg={colors.foreground}>Cached Libraries:</span>
-        </text>
+    <box flexDirection="column">
+      <text>
+        <span fg={colors.accent}>{focusMode === "cached" ? "▸ " : "  "}</span>
+        <span fg={colors.foreground}>Cached Libraries:</span>
+      </text>
+      {libraries.length > 0 ? (
         <List
           activeIndex={selectedIndex}
           focused={focusMode === "cached"}
@@ -34,8 +34,12 @@ const CachedLibraries = ({
           onActiveIndexChange={onActiveIndexChange}
           onSelect={(item) => onSelect(item.key)}
         />
-      </box>
-    )
+      ) : (
+        <text fg={colors.muted} marginLeft={2}>
+          No Cached library available.
+        </text>
+      )}
+    </box>
   );
 };
 

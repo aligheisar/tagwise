@@ -4,14 +4,18 @@ import { CachedLibraries } from "@/components/cached-libraries";
 import { ScanFolderInput } from "@/components/scan-folder-input";
 import { ScreenInfo } from "@/components/screen-info";
 import { useApp } from "@/hooks/use-app";
+import { useLibraries } from "@/hooks/use-libraries";
 import { useTheme } from "@/hooks/use-theme";
 
 export function WelcomeScreen() {
   const { colors } = useTheme();
   const renderer = useRenderer();
   const { handleSelectCached, helpOpen, setHelpShortcutEnabled } = useApp();
+  const { libraries } = useLibraries();
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [focusMode, setFocusMode] = useState<"cached" | "input">("cached");
+  const [focusMode, setFocusMode] = useState<"cached" | "input">(
+    libraries.length === 0 ? "input" : "cached",
+  );
 
   useEffect(() => {
     setHelpShortcutEnabled(focusMode !== "input");
@@ -45,7 +49,12 @@ export function WelcomeScreen() {
           onSelect={handleSelectCached}
           selectedIndex={selectedIndex}
         />
-        <ScanFolderInput focusMode={focusMode} setFocusMode={setFocusMode} />
+        <ScanFolderInput
+          focusMode={focusMode}
+          onBlur={() => {
+            setFocusMode("cached");
+          }}
+        />
       </box>
 
       <box paddingX={1}>
