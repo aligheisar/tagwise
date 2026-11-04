@@ -1,6 +1,6 @@
 interface BaseOperation {
   id: string;
-  metadata?: Record<string, unknown>;
+  metadata?: { producerName?: string } & Record<string, unknown>;
 }
 
 interface RenameOperation extends BaseOperation {
