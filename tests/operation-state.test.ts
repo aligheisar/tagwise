@@ -5,19 +5,22 @@ import {
   getOperationStats,
   operationReviewReducer,
 } from "../src/lib/operations/operation-state";
+import type { Operation } from "#/types/operation";
 
-const operations = [
+const operations: Operation[] = [
   {
     id: "rename-one",
     newPath: "/music/album/renamed.mp3",
     oldPath: "/music/album/track.mp3",
     type: "rename" as const,
+    producedBy: "test",
   },
   {
     id: "tags-one",
     path: "/music/single.mp3",
     tags: { title: "Single" },
     type: "tag-update" as const,
+    producedBy: "test",
   },
 ];
 
@@ -93,7 +96,7 @@ describe("operation review state", () => {
   });
 
   test("toggles and moves all operations for a file as one group", () => {
-    const grouped = [
+    const grouped: Operation[] = [
       ...operations,
       {
         id: "tags-two",
@@ -101,6 +104,7 @@ describe("operation review state", () => {
         tags: { title: "Renamed title" },
         type: "tag-update" as const,
         metadata: { filePath: "/music/album/track.mp3" },
+        producedBy: "test",
       },
     ];
     let state = createOperationReviewState(grouped);
@@ -138,6 +142,7 @@ describe("operation review state", () => {
         oldPath: "/music/first.mp3",
         type: "rename",
         metadata: { filePath: "/music/first.mp3" },
+        producedBy: "test",
       },
       {
         id: "first-tags",
@@ -145,6 +150,7 @@ describe("operation review state", () => {
         tags: { title: "First" },
         type: "tag-update",
         metadata: { filePath: "/music/first.mp3" },
+        producedBy: "test",
       },
       {
         id: "second-tags",
@@ -152,6 +158,7 @@ describe("operation review state", () => {
         tags: { title: "Second" },
         type: "tag-update",
         metadata: { filePath: "/music/second.mp3" },
+        producedBy: "test",
       },
     ]);
 

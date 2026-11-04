@@ -24,7 +24,7 @@ function getPreviousTags(
 
 function getOperationChanges(group: FileOperationGroup): OperationChange[] {
   return group.operations.flatMap(({ id, modifiedValue, operation }) => {
-    const producer = String(operation.metadata?.producerName ?? operation.type);
+    const producer = String(operation.producedBy);
 
     if (operation.type === "rename") {
       const newPath =

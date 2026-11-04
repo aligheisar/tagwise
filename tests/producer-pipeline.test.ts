@@ -21,17 +21,22 @@ describe("runProducerPipeline", () => {
 
     const renameProducer: Producer = {
       name: "renamer",
+      title: "Renamer",
+      version: "1.0.0",
       produce: async () => [
         {
           id: "rename-track",
           newPath: "/music/renamed.mp3",
           oldPath: "/music/track.mp3",
           type: "rename",
+          producedBy: "renamer",
         },
       ],
     };
     const tagProducer: Producer = {
       name: "tagger",
+      title: "Tagger",
+      version: "1.0.0",
       produce: async (snapshot) => {
         const item = snapshot.items[0];
         if (item?.status === "ok") {
@@ -44,6 +49,7 @@ describe("runProducerPipeline", () => {
             path: "/music/renamed.mp3",
             tags: { album: "Projected", year: 2024 },
             type: "tag-update",
+            producedBy: "tagger",
           },
         ];
       },
@@ -94,6 +100,8 @@ describe("runProducerPipeline", () => {
     } as Library;
     const addRemix: Producer = {
       name: "add-remix",
+      title: "Add Remix",
+      version: "1.0.0",
       produce: async (snapshot) =>
         snapshot.items
           .filter(
@@ -104,10 +112,13 @@ describe("runProducerPipeline", () => {
             path: item.path,
             tags: { title: "Song (Remix)" },
             type: "tag-update" as const,
+            producedBy: "add-remix",
           })),
     };
     const removeRemix: Producer = {
       name: "remove-remix",
+      title: "Remove Remix",
+      version: "1.0.0",
       produce: async (snapshot) =>
         snapshot.items
           .filter(
@@ -118,16 +129,20 @@ describe("runProducerPipeline", () => {
             path: item.path,
             tags: { title: "Song" },
             type: "tag-update" as const,
+            producedBy: "remove-remix",
           })),
     };
     const noOpProducer: Producer = {
       name: "no-op",
+      title: "No Op",
+      version: "1.0.0",
       produce: async () => [
         {
           id: "unchanged-title",
           path: "/music/unchanged.mp3",
           tags: { title: "Already tagged" },
           type: "tag-update",
+          producedBy: "no-op",
         },
       ],
     };
@@ -161,12 +176,15 @@ describe("runProducerPipeline", () => {
     } as Library;
     const producer: Producer = {
       name: "invalid",
+      title: "Invalid",
+      version: "1.0.0",
       produce: async () => [
         {
           id: "missing",
           newPath: "/music/new.mp3",
           oldPath: "/music/missing.mp3",
           type: "rename",
+          producedBy: "invalid",
         },
       ],
     };

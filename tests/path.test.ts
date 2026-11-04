@@ -24,6 +24,7 @@ describe("review tree and producer safety", () => {
           newPath: "/music/track renamed.mp3",
           oldPath: "/music/track.mp3",
           type: "rename" as const,
+          producedBy: "renamer",
         },
         status: "accepted" as const,
       },
@@ -82,6 +83,7 @@ describe("review tree and producer safety", () => {
         path: "/music/another.mp3",
         tags: { title: "Hello / World! (Remix)" },
         type: "tag-update",
+        producedBy: "remix-tag",
       },
     ]);
   });
@@ -94,6 +96,7 @@ describe("review tree and producer safety", () => {
         newPath: "/music/track renamed.mp3",
         oldPath: "/music/track.mp3",
         type: "rename" as const,
+        producedBy: "renamer",
       },
       status: "accepted" as const,
     };
@@ -113,6 +116,7 @@ describe("review tree and producer safety", () => {
         path: filePath,
         tags: { title: id },
         type: "tag-update" as const,
+        producedBy: "test",
       },
       status: "accepted" as const,
     });
@@ -152,10 +156,10 @@ describe("review tree and producer safety", () => {
           path: "/music/song.mp3",
           tags: { title: "Song (Remix)" },
           type: "tag-update" as const,
+          producedBy: "add-remix",
           metadata: {
             filePath: "/music/song.mp3",
             previousTags: { title: ["Song"] },
-            producerName: "add-remix",
           },
         },
         status: "accepted" as const,
@@ -167,10 +171,10 @@ describe("review tree and producer safety", () => {
           path: "/music/song.mp3",
           tags: { title: "Song" },
           type: "tag-update" as const,
+          producedBy: "remove-remix",
           metadata: {
             filePath: "/music/song.mp3",
             previousTags: { title: ["Song (Remix)"] },
-            producerName: "remove-remix",
           },
         },
         status: "accepted" as const,

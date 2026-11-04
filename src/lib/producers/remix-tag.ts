@@ -3,8 +3,10 @@ import type { Operation } from "#/types/operation";
 import type { Producer } from "#/types/producer";
 
 export class RemixTagProducer implements Producer {
+  title = "Remix Tag";
   name = "remix-tag";
   description = "Add ' (Remix)' at the end of title.";
+  version = "1.0.0";
 
   produce(library: Library): Promise<Operation[]> {
     const operations: Operation[] = [];
@@ -18,6 +20,7 @@ export class RemixTagProducer implements Producer {
       operations.push({
         id: `${this.name}-${item.path}`,
         path: item.path,
+        producedBy: this.name,
         tags: { title: `${title} (Remix)` },
         type: "tag-update",
       });

@@ -4,7 +4,7 @@ import path from "node:path";
 type ProducerScaffoldDetails = {
   title: string;
   version: string;
-  description: string;
+  description?: string;
 };
 
 type ProducerScaffoldResult = {
@@ -35,8 +35,7 @@ const producer: Producer = {
   name: ${JSON.stringify(name)},
   title: ${JSON.stringify(details.title.trim())},
   version: ${JSON.stringify(details.version.trim())},
-  description: ${JSON.stringify(details.description.trim())},
-
+  ${details.description ? `description: ${JSON.stringify(details.description.trim())},\n` : ""}
   async produce(library) {
     const operations: ProducerOperation[] = [];
 
@@ -52,6 +51,7 @@ const producer: Producer = {
       //   type: "tag-update",
       //   path: item.path,
       //   tags: { title: title + " (Example)" },
+      //   producedBy: this.name
       // });
     }
 
@@ -156,7 +156,7 @@ export type Producer = {
   name: string;
   title: string;
   version: string;
-  description: string;
+  description?: string;
   produce(library: ProducerLibrary): Promise<ProducerOperation[]>;
 };
 `;
