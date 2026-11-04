@@ -15,6 +15,7 @@ import { config } from "#/config";
 import { cacheService } from "#/containers/cache.container";
 import { producerService } from "#/containers/producer.container";
 import {
+  createProducer,
   formatCacheList,
   formatCacheShow,
   scanLibrary,
