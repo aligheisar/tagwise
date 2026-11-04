@@ -13,7 +13,7 @@
 - [x] No cache list available: focus the folder path input on start.
 - [x] `h` on a tree item: collapse the nearest open folder above and move the selection to it.
 - [x] Fix path input in the CLI (file and folder completions misbehave).
-- [ ] Case insensitive autocomplete for scan folder input.
+- [x] Case insensitive autocomplete for scan folder input.
 
 **Review tab**
 - [x] Accepting or rejecting a folder cascades to all subfolders and files.

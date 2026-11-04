@@ -207,11 +207,19 @@ export function ReviewScreen() {
         break;
       case "a":
         if (key.shift) acceptAll();
-        else handleA();
+        else if (currentNode?.type === "folder") {
+          acceptFolder(currentNode.node.path);
+        } else {
+          handleA();
+        }
         break;
       case "r":
         if (key.shift) rejectAll();
-        else handleR();
+        else if (currentNode?.type === "folder") {
+          rejectFolder(currentNode.node.path);
+        } else {
+          handleR();
+        }
         break;
       case "m":
         handleM();
