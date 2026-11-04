@@ -17,14 +17,13 @@
 
 **Review tab**
 - [x] Accepting or rejecting a folder cascades to all subfolders and files.
-- [ ] Accepting or rejecting on folder itself should cascades to all folders and files
+- [x] Accepting or rejecting on folder itself should cascades to all folders and files
 - [x] Redesign the song info rows:
   - the title is the primary
   - the index moves to the end of the row with muted color
   - other info should be muted too
 
 **Producers**
-- [ ] Custom producers are missing from the completions (fixed for good by 2.1).
 - [ ] Add List and Purge for Producers in cli.
 
 ---
