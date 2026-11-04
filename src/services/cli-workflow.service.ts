@@ -123,9 +123,6 @@ async function createProducer(
   if (!details.title) {
     throw new Error("Producer title is required");
   }
-  if (!details.description) {
-    throw new Error("Producer description is required");
-  }
   return createProducerFile(directory, details, registeredNames);
 }
 

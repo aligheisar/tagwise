@@ -81,9 +81,11 @@ export function createCLI() {
           "create",
           object({
             command: constant("producer create"),
-            description: option("--description", string({ metavar: "TEXT" }), {
-              description: message`Describe what the producer does`,
-            }),
+            description: optional(
+              option("--description", string({ metavar: "TEXT" }), {
+                description: message`Describe what the producer does`,
+              }),
+            ),
             producerVersion: withDefault(
               option("--producer-version", string({ metavar: "VERSION" }), {
                 description: message`Producer version`,
@@ -149,7 +151,7 @@ export async function executeCLICommand(invocation: CLICommand): Promise<void> {
       const result = await createProducer(
         config.producersDir,
         {
-          description: invocation.description.trim(),
+          description: invocation.description,
           title: invocation.title.trim(),
           version: invocation.producerVersion.trim() || "1.0.0",
         },

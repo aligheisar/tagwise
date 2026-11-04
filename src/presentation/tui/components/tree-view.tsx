@@ -62,7 +62,7 @@ function toTermTreeNode(
           ? item.tags.title[0]
           : path.basename(group.filePath);
       const producers = group.operations.map(
-        ({ operation }) => operation.metadata?.producerName ?? operation.type,
+        ({ operation }) => operation.producedBy,
       );
       const index = `#${String(group.order + 1).padStart(3, "0")}`;
 

@@ -5,8 +5,10 @@ import type { Operation } from "#/types/operation";
 import type { Producer } from "#/types/producer";
 
 export class RenamerProducer implements Producer {
+  title = "Renamer";
   name = "renamer";
   description = "Rename music with it's title.";
+  version = "1.0.0";
 
   produce(library: Library): Promise<Operation[]> {
     const operations: Operation[] = [];
@@ -30,6 +32,7 @@ export class RenamerProducer implements Producer {
           title + path.extname(item.path),
         ),
         oldPath: item.path,
+        producedBy: this.name,
         type: "rename",
       });
     }
