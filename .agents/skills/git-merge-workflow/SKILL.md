@@ -95,6 +95,7 @@ User asks to apply/review a change to merge
 
 ## Key Rules
 
+- **ALWAYS merge through the workflow — never commit directly to main.** All changes must go through feature branches and pull requests.
 - Always pull before creating branches to avoid conflicts
 - Commit messages should follow conventional commit format where appropriate
 - For issue fixes, always reference the issue in commits and PR description
