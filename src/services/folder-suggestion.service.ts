@@ -36,7 +36,11 @@ async function getFolderSuggestions(input: string): Promise<string[]> {
   try {
     const entries = await readdir(parent, { withFileTypes: true });
     return entries
-      .filter((e) => e.isDirectory() && e.name.startsWith(prefix))
+      .filter(
+        (e) =>
+          e.isDirectory() &&
+          e.name.toLowerCase().startsWith(prefix.toLowerCase()),
+      )
       .map((e) => `${join(parent, e.name)}/`)
       .slice(0, 10);
   } catch (error) {
