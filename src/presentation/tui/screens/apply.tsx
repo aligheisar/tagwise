@@ -71,7 +71,7 @@ export function ApplyScreen() {
 
   return (
     <box flexDirection="column" flexGrow={1} justifyContent="space-between">
-      <box flexDirection="column" gap={1} padding={1}>
+      <box flexDirection="column" gap={1}>
         <ScreenInfo
           description="Apply reviewed operations"
           title="confirm changes"

@@ -37,7 +37,7 @@ export function WelcomeScreen() {
 
   return (
     <box gap={1} height="100%" justifyContent="space-between">
-      <box flexDirection="column" gap={1} padding={1}>
+      <box flexDirection="column" gap={1}>
         <ScreenInfo
           description="Music Library Tag Manager"
           title="tagwise tui"

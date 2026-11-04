@@ -102,7 +102,7 @@ export function ProducerSelect() {
 
   return (
     <box flexDirection="column" flexGrow={1} justifyContent="space-between">
-      <box flexDirection="column" gap={1} padding={1}>
+      <box flexDirection="column" gap={1}>
         <ScreenInfo
           description="Select your desired changes to library"
           title="select producers"
@@ -113,23 +113,21 @@ export function ProducerSelect() {
             const isSelected = selected.has(producer.name);
             const isCursor = i === cursorIndex;
             return (
-              <box
-                backgroundColor={isCursor ? colors.selection : undefined}
-                flexDirection="row"
-                key={producer.name}
-                paddingX={2}
-                paddingY={0}
-              >
+              <box flexDirection="row" key={producer.name}>
                 <text>
-                  <span fg={colors.selectionForeground}>
-                    {isCursor ? "› " : "  "}
-                  </span>
-                  <span fg={isSelected ? colors.success : colors.error}>
+                  <span fg={colors.accent}>{isCursor ? "› " : "  "}</span>
+                  <span
+                    fg={
+                      isCursor
+                        ? colors.accent
+                        : isSelected
+                          ? colors.success
+                          : colors.error
+                    }
+                  >
                     {isSelected ? "[x] " : "[ ] "}
                   </span>
-                  <span
-                    fg={isCursor ? colors.selectionForeground : colors.accent}
-                  >
+                  <span fg={isCursor ? colors.selection : colors.foreground}>
                     {producer.title ?? producer.name}
                   </span>
                   <span fg={isCursor ? colors.mutedForeground : colors.muted}>
