@@ -3,11 +3,24 @@ import { useMemo, useState } from "react";
 
 import { useTheme } from "@/hooks/use-theme";
 
-export interface TreeNode {
-  children?: TreeNode[];
+export interface TreeFile {
+  icon?: string;
+  index: string;
+  key: string;
+  producers: string[];
+  title: string;
+  type: "File";
+}
+
+export type TreeNode = TreeFolder | TreeFile;
+
+interface TreeFolder {
+  children: (TreeFile | TreeFolder)[];
   icon?: string;
   key: string;
-  label: string;
+  operationCount: number;
+  title: string;
+  type: "Folder";
 }
 
 export interface TreeProps {
@@ -36,11 +49,13 @@ const flattenTree = (
 ): FlatNode[] => {
   const result: FlatNode[] = [];
   for (const node of nodes) {
-    const hasChildren = Boolean(node.children && node.children.length > 0);
+    const hasChildren = Boolean(
+      node.type === "Folder" && node.children.length > 0,
+    );
     result.push({ depth, hasChildren, node });
     if (hasChildren && expandedKeys.has(node.key)) {
       const childFlat = flattenTree(
-        node.children ?? [],
+        node.type === "Folder" ? node.children : [],
         expandedKeys,
         depth + 1,
       );
@@ -132,10 +147,24 @@ export const Tree = ({
                 isActive ? theme.colors.primary : theme.colors.mutedForeground
               }
             >{`${indicator} `}</text>
-            <text
-              fg={isActive ? theme.colors.primary : theme.colors.foreground}
-            >
-              {isActive ? <b>{node.label}</b> : node.label}
+            <text bg={isActive ? theme.colors.primary : "transparent"}>
+              {node.type === "Folder" ? (
+                <>
+                  <span fg={theme.colors.foreground}>{node.title}</span>{" "}
+                  <span fg={theme.colors.muted}>({node.operationCount})</span>
+                </>
+              ) : (
+                <>
+                  <span fg={theme.colors.foreground}>{node.title}</span>
+                  {" - "}
+                  <span fg={theme.colors.muted}>
+                    {node.producers.length > 2
+                      ? [...node.producers.slice(0, 2), "..."].join(", ")
+                      : node.producers.join(", ")}
+                  </span>{" "}
+                  <span fg={theme.colors.primary}>{node.index}</span>
+                </>
+              )}
             </text>
           </box>
         );

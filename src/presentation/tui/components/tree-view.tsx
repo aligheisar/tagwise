@@ -6,7 +6,11 @@ import {
 } from "#/lib/tree/tree-model";
 import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
 import type { Library } from "#/types/library";
-import { type TreeNode as TermTreeNode, Tree } from "@/components/ui/tree";
+import {
+  type TreeNode as TermTreeNode,
+  Tree,
+  type TreeFile,
+} from "@/components/ui/tree";
 import type { OperationState } from "@/hooks/use-operations";
 
 interface TreeViewProps {
@@ -49,7 +53,7 @@ function toTermTreeNode(
 ): TermTreeNode {
   const children: TermTreeNode[] = [
     ...folder.children.map((node) => toTermTreeNode(node, library)),
-    ...folder.leafChildren.map(({ group }) => {
+    ...folder.leafChildren.map<TreeFile>(({ group }) => {
       const item = library?.items.find(
         (i) => i.path === group.filePath && i.status === "ok",
       );
@@ -64,8 +68,11 @@ function toTermTreeNode(
 
       return {
         icon: group.status === "rejected" ? "✗" : "♫",
+        index,
         key: group.id,
-        label: `${title} — ${producers.join(", ")} (${index})`,
+        producers,
+        title,
+        type: "File",
       };
     }),
   ];
@@ -74,6 +81,8 @@ function toTermTreeNode(
     children,
     icon: "♪",
     key: folder.path,
-    label: `${folder.displayName}/ (${folder.operationCount} operations)`,
+    operationCount: folder.operationCount,
+    title: folder.displayName,
+    type: "Folder",
   };
 }
