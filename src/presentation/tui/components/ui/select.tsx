@@ -84,10 +84,10 @@ export const Select = <T = string>({
             <text fg={isActive ? resolvedCursorColor : undefined}>
               {isActive ? cursor : " "}
             </text>
-            <text fg={opt.disabled ? "#666" : optColor}>
+            <text fg={opt.disabled ? theme.colors.muted : optColor}>
               {isActive || isSelected ? <b>{opt.label}</b> : opt.label}
             </text>
-            {opt.hint && <text fg="#666">{opt.hint}</text>}
+            {opt.hint && <text fg={theme.colors.muted}>{opt.hint}</text>}
           </box>
         );
       })}

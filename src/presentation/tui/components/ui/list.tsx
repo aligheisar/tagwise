@@ -89,7 +89,7 @@ export const List = ({
           paddingLeft={1}
           paddingRight={1}
         >
-          <text fg={filter ? undefined : "#666"}>
+          <text fg={filter ? undefined : theme.colors.muted}>
             {filter || "Type to filter…"}
           </text>
         </box>
@@ -110,13 +110,21 @@ export const List = ({
             </text>
             {labelEl}
             {item.description ? (
-              <text fg="#666">{item.description}</text>
+              <text
+                fg={
+                  isActive ? theme.colors.mutedForeground : theme.colors.muted
+                }
+              >
+                {item.description}
+              </text>
             ) : null}
           </box>
         );
       })}
       {filtered.length > height ? (
-        <text fg="#666">{`${filtered.length - height} more…`}</text>
+        <text
+          fg={theme.colors.muted}
+        >{`${filtered.length - height} more…`}</text>
       ) : null}
     </box>
   );
