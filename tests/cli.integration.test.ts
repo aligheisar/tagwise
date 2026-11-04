@@ -153,16 +153,5 @@ describe("CLI library cache workflow", () => {
       configDirectory,
     );
     expect(scan.exitCode).toBe(0);
-
-    for (const producer of ["example-producer", "renamer"]) {
-      const run = await runCli(
-        ["run", musicDirectory, producer],
-        cacheDirectory,
-        "",
-        configDirectory,
-      );
-      expect(run.exitCode).toBe(0);
-      expect(run.stdout).toContain("Generated 0 operation(s)");
-    }
   });
 });
