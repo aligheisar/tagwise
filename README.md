@@ -19,7 +19,6 @@ You can also use the CLI directly:
 ```bash
 bun run src/main.ts scan ~/Music
 bun run src/main.ts cache list
-bun run src/main.ts run renamer ~/Music
 bun run src/main.ts producer create
 ```
 
