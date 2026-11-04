@@ -41,6 +41,41 @@ async function runCli(
 }
 
 describe("CLI library cache workflow", () => {
+  test("shows Optique help and generates shell completion", async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(os.tmpdir(), "tagwise-cli-help-test-"),
+    );
+    const cacheDirectory = path.join(temporaryDirectory, "cache");
+
+    const help = await runCli(["--help"], cacheDirectory);
+    expect(help.exitCode).toBe(0);
+    expect(help.stdout).toContain("Music library tag management tool");
+    expect(help.stdout).toContain("--completion SHELL");
+    expect(help.stderr).toBe("");
+
+    const shortHelp = await runCli(["-h"], cacheDirectory);
+    expect(shortHelp.exitCode).toBe(0);
+    expect(shortHelp.stdout).toContain("Music library tag management tool");
+
+    const completion = await runCli(["--completion", "bash"], cacheDirectory);
+    expect(completion.exitCode).toBe(0);
+    expect(completion.stdout).toContain("function _tagwise");
+    expect(completion.stderr).toBe("");
+
+    for (const versionFlag of ["--version", "-v"]) {
+      const version = await runCli([versionFlag], cacheDirectory);
+      expect(version.exitCode).toBe(0);
+      expect(version.stdout).toBe("0.1.0\n");
+    }
+
+    const nestedVersion = await runCli(
+      ["cache", "list", "--version"],
+      cacheDirectory,
+    );
+    expect(nestedVersion.exitCode).not.toBe(0);
+    expect(nestedVersion.stdout).not.toContain("0.1.0");
+  });
+
   test("scans a folder and lists its cached library", async () => {
     temporaryDirectory = await mkdtemp(
       path.join(os.tmpdir(), "tagwise-cli-test-"),
@@ -59,17 +94,28 @@ describe("CLI library cache workflow", () => {
     expect(list.stdout).toContain("0 file(s)");
   });
 
-  test("creates a typed producer from interactive prompts", async () => {
+  test("creates and runs a typed producer from CLI options", async () => {
     temporaryDirectory = await mkdtemp(
       path.join(os.tmpdir(), "tagwise-cli-producer-test-"),
     );
     const cacheDirectory = path.join(temporaryDirectory, "cache");
     const configDirectory = path.join(temporaryDirectory, "config");
+    const musicDirectory = path.join(temporaryDirectory, "music");
+    await mkdir(musicDirectory);
 
     const result = await runCli(
-      ["producer", "create"],
+      [
+        "producer",
+        "create",
+        "--title",
+        "Example Producer",
+        "--producer-version",
+        "1.2.3",
+        "--description",
+        "A producer used to test scaffolding",
+      ],
       cacheDirectory,
-      "Example Producer\n1.2.3\nA producer used to test scaffolding\n",
+      "",
       configDirectory,
     );
 
@@ -99,5 +145,24 @@ describe("CLI library cache workflow", () => {
       title: "Example Producer",
       version: "1.2.3",
     });
+
+    const scan = await runCli(
+      ["scan", musicDirectory],
+      cacheDirectory,
+      "",
+      configDirectory,
+    );
+    expect(scan.exitCode).toBe(0);
+
+    for (const producer of ["example-producer", "renamer"]) {
+      const run = await runCli(
+        ["run", musicDirectory, producer],
+        cacheDirectory,
+        "",
+        configDirectory,
+      );
+      expect(run.exitCode).toBe(0);
+      expect(run.stdout).toContain("Generated 0 operation(s)");
+    }
   });
 });

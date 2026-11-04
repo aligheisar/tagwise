@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skill/opentui/SKILL.md",
       "computedHash": "2915038bb3297e759f740f9e6bfa885ed80a4a7fe945825f5874b48db9ce0fd2"
+    },
+    "optique": {
+      "source": "dahlia/optique",
+      "sourceType": "github",
+      "skillPath": "packages/core/skills/optique/SKILL.md",
+      "computedHash": "bdb242d1fa8af798c3a0487602c31b4b1f751263dba2dcf73d0b165b3d192c2a"
     }
   }
 }
