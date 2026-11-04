@@ -98,7 +98,9 @@ export const Banner = ({
               {children}
             </box>
           </box>
-          {dismissible && <text fg="#666">press Esc to dismiss</text>}
+          {dismissible && (
+            <text fg={theme.colors.muted}>press Esc to dismiss</text>
+          )}
         </box>
       </box>
     </box>

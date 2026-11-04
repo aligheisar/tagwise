@@ -81,7 +81,7 @@ export const Modal = ({
       </box>
       {closeHint !== false && (
         <box marginTop={1}>
-          <text fg="#666">{closeHint}</text>
+          <text fg={theme.colors.muted}>{closeHint}</text>
         </box>
       )}
     </box>
