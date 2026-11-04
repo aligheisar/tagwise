@@ -1,3 +1,5 @@
+import { unlink } from "node:fs/promises";
+import pathNode from "node:path";
 import { object, or } from "@optique/core/constructs";
 import { message } from "@optique/core/message";
 import { optional, withDefault } from "@optique/core/modifiers";
@@ -74,24 +76,39 @@ export function createCLI() {
     ),
     command(
       "producer",
-      command(
-        "create",
-        object({
-          command: constant("producer create"),
-          description: option("--description", string({ metavar: "TEXT" }), {
-            description: message`Describe what the producer does`,
-          }),
-          producerVersion: withDefault(
-            option("--producer-version", string({ metavar: "VERSION" }), {
-              description: message`Producer version`,
+      or(
+        command(
+          "create",
+          object({
+            command: constant("producer create"),
+            description: option("--description", string({ metavar: "TEXT" }), {
+              description: message`Describe what the producer does`,
             }),
-            "1.0.0",
-          ),
-          title: option("--title", string({ metavar: "TITLE" }), {
-            description: message`Producer title`,
+            producerVersion: withDefault(
+              option("--producer-version", string({ metavar: "VERSION" }), {
+                description: message`Producer version`,
+              }),
+              "1.0.0",
+            ),
+            title: option("--title", string({ metavar: "TITLE" }), {
+              description: message`Producer title`,
+            }),
           }),
+          { description: message`Create a typed user producer module` },
+        ),
+        command("list", object({ command: constant("producer list") }), {
+          description: message`List all available producers`,
         }),
-        { description: message`Create a typed user producer module` },
+        command(
+          "purge",
+          object({
+            command: constant("producer purge"),
+            name: argument(string(), {
+              description: message`Name of the producer to purge`,
+            }),
+          }),
+          { description: message`Purge a custom producer` },
+        ),
       ),
       { description: message`Create and manage user producers` },
     ),
@@ -141,6 +158,62 @@ export async function executeCLICommand(invocation: CLICommand): Promise<void> {
       process.stdout.write(
         `Created producer "${result.name}" at ${result.filePath}\n`,
       );
+      break;
+    }
+    case "producer list": {
+      const producers = producerService.getAll();
+      if (producers.length === 0) {
+        process.stdout.write("No producers available.\n");
+        break;
+      }
+      const lines: string[] = [];
+      lines.push(`Available producers (${producers.length}):\n`);
+      for (const producer of producers) {
+        lines.push(`  ${producer.name}`);
+        if (producer.title) {
+          lines.push(`    Title: ${producer.title}`);
+        }
+        if (producer.description) {
+          lines.push(`    Description: ${producer.description}`);
+        }
+        if (producer.version) {
+          lines.push(`    Version: ${producer.version}`);
+        }
+        lines.push("");
+      }
+      process.stdout.write(`${lines.join("\n").trim()}\n`);
+      break;
+    }
+    case "producer purge": {
+      const producersDir = config.producersDir;
+      const producerName = invocation.name;
+      const producer = producerService
+        .getAll()
+        .find((p) => p.name === producerName);
+      if (!producer) {
+        process.stdout.write(`Producer "${producerName}" not found.\n`);
+        break;
+      }
+      if (!producer.title) {
+        process.stdout.write(
+          `Producer "${producerName}" is a built-in producer and cannot be purged.\n`,
+        );
+        break;
+      }
+      const producerFilePath = pathNode.join(
+        producersDir,
+        `${producerName}.ts`,
+      );
+      try {
+        await unlink(producerFilePath);
+        process.stdout.write(
+          `Purged producer "${producerName}" at ${producerFilePath}\n`,
+        );
+      } catch (error) {
+        process.stdout.write(
+          `Failed to purge producer "${producerName}": ${error instanceof Error ? error.message : String(error)}\n`,
+        );
+      }
       break;
     }
   }
