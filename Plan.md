@@ -24,7 +24,7 @@
   - other info should be muted too
 
 **Producers**
-- [ ] Add List and Purge for Producers in cli.
+- [x] Add List and Purge for Producers in cli.
 
 ---
 
