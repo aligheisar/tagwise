@@ -9,6 +9,7 @@ type OperationChange = {
   producer: string;
 };
 
+/** Formats tag values for review, distinguishing multi-value tags from strings. */
 function displayValue(value: unknown): string {
   if (value === undefined || value === null || value === "") return "(empty)";
   if (!Array.isArray(value)) return String(value);
@@ -18,6 +19,7 @@ function displayValue(value: unknown): string {
   return value.length > 1 ? `[${formatted}]` : formatted;
 }
 
+/** Compares tag values structurally before formatting can obscure differences. */
 function sameTagValue(left: unknown, right: unknown): boolean {
   if (Array.isArray(left) || Array.isArray(right)) {
     if (!Array.isArray(left) || !Array.isArray(right)) return false;
@@ -29,6 +31,7 @@ function sameTagValue(left: unknown, right: unknown): boolean {
   return Object.is(left, right);
 }
 
+/** Reads the tag values captured before an operation was proposed. */
 function getPreviousTags(
   operation: FileOperationGroup["operations"][number]["operation"],
 ): Record<string, unknown> {
@@ -37,6 +40,7 @@ function getPreviousTags(
   return previousTags as Record<string, unknown>;
 }
 
+/** Builds visible review changes for a file's ordered operations. */
 function getOperationChanges(group: FileOperationGroup): OperationChange[] {
   return group.operations.flatMap(({ id, modifiedValue, operation }) => {
     const producer = String(operation.producedBy);

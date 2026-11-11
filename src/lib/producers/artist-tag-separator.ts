@@ -8,6 +8,7 @@ type ArtistTagMode = "split" | "combine";
 const artistFields = ["artist", "albumArtist"] as const;
 const supportedExtensions = new Set([".flac", ".mp3", ".m4a", ".mp4"]);
 
+/** Splits artist values by format-specific separators and normalizes MP3 values. */
 function splitValues(values: readonly string[], isMp3: boolean): string[] {
   const separator = isMp3 ? /[,;]/ : /,/;
   const split = values.flatMap((value) =>
@@ -25,6 +26,7 @@ class ArtistTagSeparatorProducer implements Producer {
   readonly title: string;
   readonly version = "1.0.0";
 
+  /** Creates a split or combine producer with its registered display metadata. */
   constructor(private readonly mode: ArtistTagMode) {
     this.name = `${mode}-artist-tags`;
     this.title = mode === "split" ? "Split Artist Tags" : "Combine Artist Tags";
@@ -34,6 +36,7 @@ class ArtistTagSeparatorProducer implements Producer {
         : "Join multiple artist and album artist values with commas.";
   }
 
+  /** Proposes artist tag updates for supported files without changing the library. */
   produce(library: Library): Promise<Operation[]> {
     const operations: Operation[] = [];
 

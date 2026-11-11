@@ -14,6 +14,7 @@ function getTargetPath(operation: Operation): string | null {
   return null;
 }
 
+/** Returns whether every proposed tag value already matches the current tags. */
 function isNoopTagUpdate(
   currentTags: Record<string, unknown>,
   updates: Record<string, string | string[] | number>,
