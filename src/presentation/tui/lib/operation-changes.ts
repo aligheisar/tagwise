@@ -18,6 +18,17 @@ function displayValue(value: unknown): string {
   return value.length > 1 ? `[${formatted}]` : formatted;
 }
 
+function sameTagValue(left: unknown, right: unknown): boolean {
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false;
+    return (
+      left.length === right.length &&
+      left.every((value, index) => sameTagValue(value, right[index]))
+    );
+  }
+  return Object.is(left, right);
+}
+
 function getPreviousTags(
   operation: FileOperationGroup["operations"][number]["operation"],
 ): Record<string, unknown> {
@@ -51,11 +62,12 @@ function getOperationChanges(group: FileOperationGroup): OperationChange[] {
     const previousTags = getPreviousTags(operation);
 
     return Object.entries(tags).flatMap(([field, nextValue]) => {
-      const before = displayValue(previousTags[field]);
+      const previousValue = previousTags[field];
+      if (sameTagValue(previousValue, nextValue)) return [];
+
+      const before = displayValue(previousValue);
       const after = displayValue(nextValue);
-      return before === after
-        ? []
-        : [{ after, before, field, id: `${id}:${field}`, producer }];
+      return [{ after, before, field, id: `${id}:${field}`, producer }];
     });
   });
 }

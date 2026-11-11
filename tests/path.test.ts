@@ -236,4 +236,38 @@ describe("review tree and producer safety", () => {
       },
     ]);
   });
+
+  test("detects distinct original tag values with identical display strings", () => {
+    const tree = buildTree(
+      [
+        {
+          id: "ambiguous-tag",
+          operation: {
+            id: "ambiguous-tag",
+            path: "/music/song.flac",
+            tags: { artist: "[Artist One, Artist Two]" },
+            type: "tag-update" as const,
+            producedBy: "test",
+            metadata: {
+              filePath: "/music/song.flac",
+              previousTags: { artist: ["Artist One", "Artist Two"] },
+            },
+          },
+          status: "accepted" as const,
+        },
+      ],
+      "/music",
+    );
+    const group = tree[0]?.leafChildren[0]?.group;
+
+    expect(group && getOperationChanges(group)).toEqual([
+      {
+        after: "[Artist One, Artist Two]",
+        before: "[Artist One, Artist Two]",
+        field: "artist",
+        id: "ambiguous-tag:artist",
+        producer: "test",
+      },
+    ]);
+  });
 });
