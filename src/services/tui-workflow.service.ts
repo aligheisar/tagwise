@@ -6,7 +6,7 @@ import { normalizeRoot } from "#/repositories/library.repository";
 import { runProducerPipeline } from "#/services/producer-pipeline.service";
 import type { Library } from "#/types/library";
 import type { Operation } from "#/types/operation";
-import type { Producer } from "#/types/producer";
+import type { Producer, ProducerArguments } from "#/types/producer";
 
 type ScanResult = { ok: true; library: Library } | { ok: false; error: string };
 
@@ -70,6 +70,7 @@ async function selectCachedLibrary(root: string): Promise<SelectCachedResult> {
 async function generateOperations(
   folder: string,
   selectedProducerNames: string[],
+  producerArguments: Record<string, ProducerArguments> = {},
 ): Promise<GenerateOperationsResult> {
   try {
     const library = await cacheService.get(normalizeRoot(folder));
@@ -89,7 +90,11 @@ async function generateOperations(
       orderedProducers.push(producer);
     }
 
-    const { operations } = await runProducerPipeline(library, orderedProducers);
+    const { operations } = await runProducerPipeline(
+      library,
+      orderedProducers,
+      producerArguments,
+    );
 
     if (operations.length === 0) {
       return { error: "No operations to perform", ok: false };

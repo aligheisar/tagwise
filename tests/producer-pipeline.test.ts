@@ -81,6 +81,46 @@ describe("runProducerPipeline", () => {
     });
   });
 
+  test("passes configured arguments to each producer and merges its defaults", async () => {
+    const library = {
+      cachedAt: new Date(),
+      items: [],
+      root: "/music",
+    } as Library;
+    let receivedArguments:
+      | Record<string, string | number | boolean>
+      | undefined;
+    const producer: Producer = {
+      args: [
+        {
+          default: ", ",
+          key: "separator",
+          title: "Join character",
+          type: "string",
+        },
+        {
+          default: 10,
+          key: "limit",
+          title: "Limit",
+          type: "number",
+        },
+      ],
+      name: "combine",
+      title: "Combine",
+      version: "1.0.0",
+      produce: async (_snapshot, args) => {
+        receivedArguments = args;
+        return [];
+      },
+    };
+
+    await runProducerPipeline(library, [producer], {
+      combine: { separator: " / " },
+    });
+
+    expect(receivedArguments).toEqual({ limit: 10, separator: " / " });
+  });
+
   test("records each producer's previous tag values and omits no-op files", async () => {
     const library = {
       cachedAt: new Date(),

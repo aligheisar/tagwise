@@ -9,7 +9,7 @@
     "dev": "bun run --watch src/main.ts",
     "compile": "bun build src/main.ts --compile --target=bun --outfile=dist/main",
     "test": "bun run test:unit && bun run test:integration && bun run test:e2e",
-    "test:unit": "bun test tests/config.test.ts tests/path.test.ts tests/logger.test.ts tests/operation-state.test.ts tests/operation-apply.test.ts tests/producer-scaffold.test.ts tests/artist-tag-separator.test.ts tests/tui-shortcuts.test.ts",
+    "test:unit": "bun test tests/config.test.ts tests/path.test.ts tests/logger.test.ts tests/operation-state.test.ts tests/operation-apply.test.ts tests/producer-scaffold.test.ts tests/artist-tag-separator.test.ts tests/producer-argument-values.test.ts tests/tui-shortcuts.test.ts",
     "test:integration": "bun test tests/filesystem-service.test.ts tests/library-repository.test.ts tests/producer-loader.test.ts tests/producer-pipeline.test.ts",
     "test:e2e": "bun test tests/cli.integration.test.ts",
     "test:coverage": "bun test --coverage",

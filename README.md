@@ -54,9 +54,39 @@ caches with `bun run src/main.ts cache purge`.
 Add `.js`, `.mjs`, or `.ts` ESM modules to
 `$XDG_CONFIG_HOME/tagwise/producers` (default: `~/.config/tagwise/producers`).
 Each module must default-export an object with a unique, non-empty `name`, an
-async `produce(library)` function, and optional `description` and `version`
-strings. Producers return rename or tag-update operations; they do not apply
-filesystem changes directly.
+async `produce(library, args)` function, and optional `description`, `version`,
+and `args` definitions. Each argument has a unique `key`, a `title`, a `type`
+(`string`, `number`, `boolean`, or `select`), and an optional `description` and
+type-appropriate `default`. Select arguments also provide `options` with
+`label` and `value` strings. The TUI exposes these definitions as text/number
+fields, toggles, or choices in the producer details view. Producers return
+rename or tag-update operations; they do not apply filesystem changes directly.
+
+```ts
+import type { Producer } from "../producer-types";
+
+const producer: Producer = {
+  name: "combine-artists",
+  title: "Combine Artist Tags",
+  args: [
+    {
+      key: "separator",
+      title: "Join character",
+      description: "Text inserted between artist values.",
+      type: "string",
+      default: ", ",
+    },
+  ],
+  async produce(library, args = {}) {
+    const separator =
+      typeof args.separator === "string" ? args.separator : ", ";
+    // Use separator when combining values.
+    return [];
+  },
+};
+
+export default producer;
+```
 
 The `library` passed to a producer is a read-only snapshot of the current fake
 library. Producers run in the selected order, and later producers see the

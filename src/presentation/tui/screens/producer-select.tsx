@@ -1,9 +1,18 @@
 import { useKeyboard, useRenderer } from "@opentui/react";
 import { useMemo, useState } from "react";
+import type {
+  ProducerArgumentInputValues,
+  ProducerArguments,
+} from "#/types/producer";
+import { ProducerDetailModal } from "@/components/producer-detail-modal";
 import { ScreenInfo } from "@/components/screen-info";
 import { useApp } from "@/hooks/use-app";
 import { useProducers } from "@/hooks/use-producers";
 import { useTheme } from "@/hooks/use-theme";
+import {
+  resolveProducerArgumentValues,
+  toProducerArgumentInputValues,
+} from "@/lib/producer-argument-values";
 
 export function ProducerSelect() {
   const renderer = useRenderer();
@@ -16,6 +25,20 @@ export function ProducerSelect() {
   );
   const [order, setOrder] = useState<string[]>(producers.map((p) => p.name));
   const [cursorIndex, setCursorIndex] = useState(0);
+  const [detailProducerName, setDetailProducerName] = useState<string | null>(
+    null,
+  );
+  const [detailError, setDetailError] = useState<string>();
+  const [argumentValues, setArgumentValues] = useState<
+    Record<string, ProducerArgumentInputValues>
+  >(() =>
+    Object.fromEntries(
+      producers.map((producer) => [
+        producer.name,
+        toProducerArgumentInputValues(producer),
+      ]),
+    ),
+  );
 
   const orderedProducers = useMemo(
     () =>
@@ -24,6 +47,9 @@ export function ProducerSelect() {
         .filter(Boolean) as typeof producers,
     [order, producers],
   );
+  const detailProducer = detailProducerName
+    ? producers.find((producer) => producer.name === detailProducerName)
+    : undefined;
 
   const moveItem = (direction: -1 | 1) => {
     setOrder((prev) => {
@@ -44,8 +70,28 @@ export function ProducerSelect() {
     });
   };
 
+  const handleConfirm = () => {
+    const selectedNames = order.filter((name) => selected.has(name));
+    const resolvedArguments: Record<string, ProducerArguments> = {};
+    for (const name of selectedNames) {
+      const producer = producers.find((item) => item.name === name);
+      if (!producer) continue;
+      try {
+        resolvedArguments[name] = resolveProducerArgumentValues(
+          producer,
+          argumentValues[name] ?? {},
+        );
+      } catch (error) {
+        setDetailProducerName(name);
+        setDetailError(error instanceof Error ? error.message : String(error));
+        return;
+      }
+    }
+    void handleProducerConfirm(selectedNames, resolvedArguments);
+  };
+
   useKeyboard((key) => {
-    if (helpOpen) return;
+    if (helpOpen || detailProducerName) return;
 
     switch (key.name) {
       case "escape":
@@ -89,8 +135,16 @@ export function ProducerSelect() {
         break;
       }
       case "return":
-        handleProducerConfirm(order.filter((name) => selected.has(name)));
+        handleConfirm();
         break;
+      case "i": {
+        const producer = orderedProducers[cursorIndex];
+        if (producer) {
+          setDetailError(undefined);
+          setDetailProducerName(producer.name);
+        }
+        break;
+      }
       case "a":
         setSelected(new Set(producers.map((p) => p.name)));
         break;
@@ -143,11 +197,33 @@ export function ProducerSelect() {
         <text>
           <span fg={colors.muted}>
             {
-              "Esc: back | Space: toggle | a: all | n: none | J/K: reorder | Enter: confirm"
+              "Esc: back | Space: toggle | i: details/arguments | a: all | n: none | J/K: reorder | Enter: confirm"
             }
           </span>
         </text>
       </box>
+      {detailProducer && (
+        <ProducerDetailModal
+          error={detailError}
+          key={detailProducer.name}
+          onChange={(key, value) => {
+            setArgumentValues((previous) => ({
+              ...previous,
+              [detailProducer.name]: {
+                ...previous[detailProducer.name],
+                [key]: value,
+              },
+            }));
+            setDetailError(undefined);
+          }}
+          onClose={() => {
+            setDetailProducerName(null);
+            setDetailError(undefined);
+          }}
+          producer={detailProducer}
+          values={argumentValues[detailProducer.name] ?? {}}
+        />
+      )}
     </box>
   );
 }

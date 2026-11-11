@@ -28,8 +28,9 @@ describe("producer scaffolding", () => {
     temporaryDirectory = await mkdtemp(
       path.join(os.tmpdir(), "tagwise-producer-scaffold-"),
     );
+    const producerDirectory = path.join(temporaryDirectory, "producers");
 
-    const created = await createProducerFile(temporaryDirectory, {
+    const created = await createProducerFile(producerDirectory, {
       description: "Adds a test tag",
       title: "Test Producer",
       version: "0.2.0",
@@ -41,11 +42,14 @@ describe("producer scaffolding", () => {
     expect(source).toContain('name: "test-producer"');
     expect(source).toContain('title: "Test Producer"');
     expect(source).toContain('type: "tag-update"');
+    expect(source).toContain("async produce(library, args = {})");
     expect(source).toContain(
       'import type { Producer, ProducerOperation } from "../producer-types"',
     );
     expect(source).not.toContain("type ProducerLibraryItem");
     expect(sharedTypes).toContain("export type ProducerLibraryItem");
+    expect(sharedTypes).toContain("export type ProducerArguments");
+    expect(sharedTypes).toContain("export type ProducerArgument");
     expect(sharedTypes).toContain("export type SongTags");
     expect(sharedTypes).toContain(
       "tags: Record<string, string | string[] | number>",

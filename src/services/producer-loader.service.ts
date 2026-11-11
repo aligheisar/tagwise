@@ -14,13 +14,76 @@ type ProducerLoadResult = {
   errors: ProducerLoadError[];
 };
 
+function isProducerArgument(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const argument = value as Record<string, unknown>;
+  if (
+    typeof argument.key !== "string" ||
+    argument.key.trim().length === 0 ||
+    typeof argument.title !== "string" ||
+    argument.title.trim().length === 0 ||
+    (argument.description !== undefined &&
+      typeof argument.description !== "string")
+  ) {
+    return false;
+  }
+
+  if (argument.type === "string") {
+    return (
+      argument.default === undefined || typeof argument.default === "string"
+    );
+  }
+  if (argument.type === "number") {
+    return (
+      argument.default === undefined ||
+      (typeof argument.default === "number" &&
+        Number.isFinite(argument.default))
+    );
+  }
+  if (argument.type === "boolean") {
+    return (
+      argument.default === undefined || typeof argument.default === "boolean"
+    );
+  }
+  if (argument.type === "select") {
+    if (
+      !Array.isArray(argument.options) ||
+      argument.options.length === 0 ||
+      !argument.options.every(
+        (option) =>
+          typeof option === "object" &&
+          option !== null &&
+          typeof option.label === "string" &&
+          option.label.trim().length > 0 &&
+          typeof option.value === "string",
+      ) ||
+      (argument.default !== undefined &&
+        (typeof argument.default !== "string" ||
+          !argument.options.some(
+            (option) => option.value === argument.default,
+          )))
+    ) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
 function isProducer(value: unknown): value is Producer {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Record<string, unknown>;
+  const argsAreValid =
+    candidate.args === undefined ||
+    (Array.isArray(candidate.args) &&
+      candidate.args.every(isProducerArgument) &&
+      new Set(candidate.args.map((argument) => argument.key)).size ===
+        candidate.args.length);
   return (
     typeof candidate.name === "string" &&
     candidate.name.trim().length > 0 &&
     typeof candidate.produce === "function" &&
+    argsAreValid &&
     (candidate.description === undefined ||
       typeof candidate.description === "string") &&
     (candidate.title === undefined || typeof candidate.title === "string") &&
@@ -69,4 +132,4 @@ async function loadProducers(directory: string): Promise<ProducerLoadResult> {
 }
 
 export type { ProducerLoadError, ProducerLoadResult };
-export { isProducer, loadProducers };
+export { isProducer, isProducerArgument, loadProducers };

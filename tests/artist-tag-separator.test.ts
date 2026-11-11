@@ -76,6 +76,25 @@ describe("ArtistTagSeparatorProducer", () => {
     });
   });
 
+  test("combines values with the configured join character", async () => {
+    const producer = new ArtistTagSeparatorProducer("combine");
+    const operations = await producer.produce(
+      createLibrary([
+        {
+          path: "/music/track.flac",
+          status: "ok",
+          tags: { artist: ["Artist One", "Artist Two"] },
+        },
+      ] as Library["items"]),
+      { separator: " / " },
+    );
+
+    expect(operations[0]?.type).toBe("tag-update");
+    if (operations[0]?.type === "tag-update") {
+      expect(operations[0].tags.artist).toBe("Artist One / Artist Two");
+    }
+  });
+
   test("ignores unsupported formats, errored items, and unchanged tags", async () => {
     const producer = new ArtistTagSeparatorProducer("split");
     const operations = await producer.produce(

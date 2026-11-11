@@ -36,7 +36,7 @@ const producer: Producer = {
   title: ${JSON.stringify(details.title.trim())},
   version: ${JSON.stringify(details.version.trim())},
   ${details.description ? `description: ${JSON.stringify(details.description.trim())},\n` : ""}
-  async produce(library) {
+  async produce(library, args = {}) {
     const operations: ProducerOperation[] = [];
 
     for (const item of library.items) {
@@ -152,12 +152,49 @@ export type TagUpdateOperation = {
 
 export type ProducerOperation = RenameOperation | TagUpdateOperation;
 
+export type ProducerArgument =
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "string";
+      default?: string;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "number";
+      default?: number;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "boolean";
+      default?: boolean;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "select";
+      options: { label: string; value: string }[];
+      default?: string;
+    };
+
+export type ProducerArguments = Record<string, string | number | boolean>;
+
 export type Producer = {
   name: string;
   title: string;
   version: string;
   description?: string;
-  produce(library: ProducerLibrary): Promise<ProducerOperation[]>;
+  args?: ProducerArgument[];
+  produce(
+    library: ProducerLibrary,
+    args?: ProducerArguments
+  ): Promise<ProducerOperation[]>;
 };
 `;
 }

@@ -1,7 +1,7 @@
 import path from "node:path";
 import type { Library } from "#/types/library";
 import type { Operation } from "#/types/operation";
-import type { Producer } from "#/types/producer";
+import type { Producer, ProducerArguments } from "#/types/producer";
 
 type ArtistTagMode = "split" | "combine";
 
@@ -25,6 +25,7 @@ class ArtistTagSeparatorProducer implements Producer {
   readonly name: string;
   readonly title: string;
   readonly version = "1.0.0";
+  readonly args?: Producer["args"];
 
   /** Creates a split or combine producer with its registered display metadata. */
   constructor(private readonly mode: ArtistTagMode) {
@@ -34,10 +35,24 @@ class ArtistTagSeparatorProducer implements Producer {
       mode === "split"
         ? "Split comma-separated artist and album artist tags into multiple values."
         : "Join multiple artist and album artist values with commas.";
+    if (mode === "combine") {
+      this.args = [
+        {
+          default: ", ",
+          description: "Text inserted between artist values.",
+          key: "separator",
+          title: "Join character",
+          type: "string",
+        },
+      ];
+    }
   }
 
   /** Proposes artist tag updates for supported files without changing the library. */
-  produce(library: Library): Promise<Operation[]> {
+  produce(
+    library: Library,
+    args: ProducerArguments = {},
+  ): Promise<Operation[]> {
     const operations: Operation[] = [];
 
     for (const item of library.items) {
@@ -62,7 +77,9 @@ class ArtistTagSeparatorProducer implements Producer {
             tags[field] = split;
           }
         } else if (values.length > 1) {
-          tags[field] = values.join(", ");
+          const separator =
+            typeof args.separator === "string" ? args.separator : ", ";
+          tags[field] = values.join(separator);
         }
       }
 
