@@ -63,9 +63,9 @@ fields, toggles, or choices in the producer details view. Producers return
 rename or tag-update operations; they do not apply filesystem changes directly.
 
 ```ts
-import type { Producer } from "../producer-types";
+import { defineProducer } from "../producer-types";
 
-const producer: Producer = {
+const producer = defineProducer({
   name: "combine-artists",
   title: "Combine Artist Tags",
   args: [
@@ -78,15 +78,17 @@ const producer: Producer = {
     },
   ],
   async produce(library, args = {}) {
-    const separator =
-      typeof args.separator === "string" ? args.separator : ", ";
+    const separator = args.separator ?? ", ";
     // Use separator when combining values.
     return [];
   },
-};
+});
 
 export default producer;
 ```
+
+`defineProducer` infers the argument keys and value types from `args`, so
+`produce` gets autocomplete for configured arguments.
 
 The `library` passed to a producer is a read-only snapshot of the current fake
 library. Producers run in the selected order, and later producers see the

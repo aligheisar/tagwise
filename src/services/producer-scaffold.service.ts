@@ -29,16 +29,19 @@ function createProducerSource(
   name: string,
   details: ProducerScaffoldDetails,
 ): string {
-  return `import type { Producer, ProducerOperation } from "../producer-types";
+  return `import { defineProducer } from "../producer-types";
+import type { ProducerOperation } from "../producer-types";
 
-const producer: Producer = {
+const producer = defineProducer({
   name: ${JSON.stringify(name)},
   title: ${JSON.stringify(details.title.trim())},
   version: ${JSON.stringify(details.version.trim())},
   ${details.description ? `description: ${JSON.stringify(details.description.trim())},\n` : ""}
+  // Example: args: [{ key: "separator", title: "Separator", type: "string", default: ", " }],
   async produce(library, args = {}) {
     const operations: ProducerOperation[] = [];
 
+    // For the example above: const separator = args.separator ?? ", ";
     for (const item of library.items) {
       if (item.status !== "ok") continue;
 
@@ -57,7 +60,7 @@ const producer: Producer = {
 
     return operations;
   },
-};
+});
 
 export default producer;
 `;
@@ -90,14 +93,91 @@ const producerArgumentTypeSource = `export type ProducerArgument =
       title: string;
       description?: string;
       type: "select";
+      options: readonly { label: string; value: string }[];
+      default?: string;
+    };`;
+
+const producerArgumentValueTypeSource = `type ProducerArgumentValue<Argument extends ProducerArgument> =
+  Argument extends { type: "number" }
+    ? number
+    : Argument extends { type: "boolean" }
+      ? boolean
+      : Argument extends {
+            options: readonly { value: infer Value extends string }[];
+            type: "select";
+          }
+        ? Value
+        : string;`;
+
+const producerArgumentsTypeSource = `export type ProducerArguments<
+  Arguments extends readonly ProducerArgument[] | null = null,
+> = Arguments extends readonly ProducerArgument[]
+  ? {
+      [Argument in Arguments[number] as Argument["key"]]?: ProducerArgumentValue<Argument>;
+    }
+  : Record<string, string | number | boolean>;`;
+
+const producerTypeSource = `export type Producer<
+  Arguments extends readonly ProducerArgument[] | null = null,
+> = {
+  name: string;
+  title: string;
+  version: string;
+  description?: string;
+  args?: Arguments extends readonly ProducerArgument[]
+    ? Arguments
+    : ProducerArgument[];
+  produce(
+    library: ProducerLibrary,
+    args?: ProducerArguments<Arguments>
+  ): Promise<ProducerOperation[]>;
+};`;
+
+const defineProducerFunctionSource = `export function defineProducer<
+  const Arguments extends readonly ProducerArgument[],
+>(
+  producer: Producer<Arguments> & { args: Arguments },
+): Producer<Arguments>;
+export function defineProducer(producer: Producer): Producer;
+export function defineProducer(producer: Producer): Producer {
+  return producer;
+}`;
+
+const previousProducerArgumentTypeSource = `export type ProducerArgument =
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "string";
+      default?: string;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "number";
+      default?: number;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "boolean";
+      default?: boolean;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "select";
       options: { label: string; value: string }[];
       default?: string;
     };`;
 
-const producerArgumentsTypeSource =
+const previousProducerArgumentsTypeSource =
   "export type ProducerArguments = Record<string, string | number | boolean>;";
 
-const producerTypeSource = `export type Producer = {
+const previousProducerTypeSource = `export type Producer = {
   name: string;
   title: string;
   version: string;
@@ -208,45 +288,96 @@ export type ProducerOperation = RenameOperation | TagUpdateOperation;
 
 ${producerArgumentTypeSource}
 
+${producerArgumentValueTypeSource}
+
 ${producerArgumentsTypeSource}
 
 ${producerTypeSource}
+
+${defineProducerFunctionSource}
 `;
 }
 
 function migrateProducerTypesSource(source: string): string | undefined {
   const lineEnding = source.includes("\r\n") ? "\r\n" : "\n";
   const normalizedSource = source.replace(/\r\n/g, "\n");
+  const replaceExactlyOnce = (
+    value: string,
+    previous: string,
+    current: string,
+  ): string | undefined => {
+    const index = value.indexOf(previous);
+    if (
+      index === -1 ||
+      value.indexOf(previous, index + previous.length) !== -1
+    ) {
+      return undefined;
+    }
+
+    return (
+      value.slice(0, index) + current + value.slice(index + previous.length)
+    );
+  };
+  const restoreLineEndings = (value: string) =>
+    lineEnding === "\n" ? value : value.replace(/\n/g, lineEnding);
+
   const legacyIndex = normalizedSource.indexOf(legacyProducerTypeSource);
 
   // The old scaffold had no markers, so only migrate its exact generated declaration.
-  if (
-    legacyIndex === -1 ||
-    normalizedSource.indexOf(
+  if (legacyIndex !== -1) {
+    if (
+      normalizedSource.indexOf(
+        legacyProducerTypeSource,
+        legacyIndex + legacyProducerTypeSource.length,
+      ) !== -1
+    ) {
+      return undefined;
+    }
+
+    const hasType = (name: string) =>
+      new RegExp(
+        `\\b(?:export\\s+)?(?:type|interface)\\s+${name}\\b|\\bimport\\b[^;]*\\b${name}\\b`,
+      ).test(normalizedSource);
+    if (hasType("ProducerArgument") || hasType("ProducerArguments")) {
+      return undefined;
+    }
+
+    const replacement = [
+      producerArgumentTypeSource,
+      producerArgumentValueTypeSource,
+      producerArgumentsTypeSource,
+      producerTypeSource,
+      defineProducerFunctionSource,
+    ].join("\n\n");
+    const migratedLegacySource = replaceExactlyOnce(
+      normalizedSource,
       legacyProducerTypeSource,
-      legacyIndex + legacyProducerTypeSource.length,
-    ) !== -1
-  ) {
-    return undefined;
+      replacement,
+    );
+    if (migratedLegacySource !== undefined) {
+      return restoreLineEndings(migratedLegacySource);
+    }
   }
 
-  const hasType = (name: string) =>
-    new RegExp(
-      `\\b(?:export\\s+)?(?:type|interface)\\s+${name}\\b|\\bimport\\b[^;]*\\b${name}\\b`,
-    ).test(normalizedSource);
-  const missingTypes = [
-    !hasType("ProducerArgument") ? producerArgumentTypeSource : undefined,
-    !hasType("ProducerArguments") ? producerArgumentsTypeSource : undefined,
-  ].filter((type): type is string => type !== undefined);
-  const replacement = [...missingTypes, producerTypeSource].join("\n\n");
-  const migratedSource =
-    normalizedSource.slice(0, legacyIndex) +
-    replacement +
-    normalizedSource.slice(legacyIndex + legacyProducerTypeSource.length);
+  let migratedSource = normalizedSource;
+  const previousTypes: [string, string][] = [
+    [
+      previousProducerArgumentTypeSource,
+      `${producerArgumentTypeSource}\n\n${producerArgumentValueTypeSource}`,
+    ],
+    [previousProducerArgumentsTypeSource, producerArgumentsTypeSource],
+    [
+      previousProducerTypeSource,
+      `${producerTypeSource}\n\n${defineProducerFunctionSource}`,
+    ],
+  ];
+  for (const [previous, current] of previousTypes) {
+    const nextSource = replaceExactlyOnce(migratedSource, previous, current);
+    if (nextSource === undefined) return undefined;
+    migratedSource = nextSource;
+  }
 
-  return lineEnding === "\n"
-    ? migratedSource
-    : migratedSource.replace(/\n/g, lineEnding);
+  return restoreLineEndings(migratedSource);
 }
 
 async function writeTypesFileIfMissing(filePath: string): Promise<void> {

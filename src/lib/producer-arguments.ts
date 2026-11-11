@@ -5,7 +5,7 @@ import type {
 } from "#/types/producer";
 
 function getDefaultProducerArguments(
-  definitions: ProducerArgument[] = [],
+  definitions: readonly ProducerArgument[] = [],
 ): ProducerArguments {
   return Object.fromEntries(
     definitions.map((argument) => {

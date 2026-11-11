@@ -27,24 +27,55 @@ type ProducerArgument =
       default?: string;
       description?: string;
       key: string;
-      options: { label: string; value: string }[];
+      options: readonly { label: string; value: string }[];
       title: string;
       type: "select";
     };
 
-type ProducerArguments = Record<string, string | number | boolean>;
+type ProducerArgumentValue<Argument extends ProducerArgument> =
+  Argument extends { type: "number" }
+    ? number
+    : Argument extends { type: "boolean" }
+      ? boolean
+      : Argument extends {
+            options: readonly { value: infer Value extends string }[];
+            type: "select";
+          }
+        ? Value
+        : string;
+
+type ProducerArguments<
+  Arguments extends readonly ProducerArgument[] | null = null,
+> = Arguments extends readonly ProducerArgument[]
+  ? {
+      [Argument in Arguments[number] as Argument["key"]]?: ProducerArgumentValue<Argument>;
+    }
+  : Record<string, string | number | boolean>;
+
 type ProducerArgumentInputValues = Record<string, string | boolean>;
 
-interface Producer {
-  args?: ProducerArgument[];
+interface Producer<
+  Arguments extends readonly ProducerArgument[] | null = null,
+> {
+  args?: Arguments extends readonly ProducerArgument[]
+    ? Arguments
+    : ProducerArgument[];
   description?: string;
   name: string;
   produce(
     library: ReadonlyLibrary,
-    args?: ProducerArguments,
+    args?: ProducerArguments<Arguments>,
   ): Promise<Operation[]>;
   title: string;
   version: string;
+}
+
+function defineProducer<const Arguments extends readonly ProducerArgument[]>(
+  producer: Producer<Arguments> & { args: Arguments },
+): Producer<Arguments>;
+function defineProducer(producer: Producer): Producer;
+function defineProducer(producer: Producer): Producer {
+  return producer;
 }
 
 export type {
@@ -53,3 +84,4 @@ export type {
   ProducerArgumentInputValues,
   ProducerArguments,
 };
+export { defineProducer };
