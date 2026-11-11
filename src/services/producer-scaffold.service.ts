@@ -146,7 +146,7 @@ export type TagUpdateOperation = {
   id: string;
   type: "tag-update";
   path: string;
-  tags: Record<string, string | number>;
+  tags: Record<string, string | string[] | number>;
   description?: string;
 };
 

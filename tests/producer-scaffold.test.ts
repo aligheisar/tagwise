@@ -47,6 +47,9 @@ describe("producer scaffolding", () => {
     expect(source).not.toContain("type ProducerLibraryItem");
     expect(sharedTypes).toContain("export type ProducerLibraryItem");
     expect(sharedTypes).toContain("export type SongTags");
+    expect(sharedTypes).toContain(
+      "tags: Record<string, string | string[] | number>",
+    );
     for (const tag of [
       "title",
       "artist",

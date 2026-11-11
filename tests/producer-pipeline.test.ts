@@ -168,6 +168,38 @@ describe("runProducerPipeline", () => {
     ]);
   });
 
+  test("omits no-op updates when multi-value tags are unchanged", async () => {
+    const library = {
+      cachedAt: new Date(),
+      items: [
+        {
+          path: "/music/song.flac",
+          status: "ok",
+          tags: { artist: ["Artist One", "Artist Two"] },
+        },
+      ],
+      root: "/music",
+    } as Library;
+    const producer: Producer = {
+      name: "same-artists",
+      title: "Same Artists",
+      version: "1.0.0",
+      produce: async () => [
+        {
+          id: "same-artists-song",
+          path: "/music/song.flac",
+          tags: { artist: ["Artist One", "Artist Two"] },
+          type: "tag-update",
+          producedBy: "same-artists",
+        },
+      ],
+    };
+
+    const result = await runProducerPipeline(library, [producer]);
+
+    expect(result.operations).toEqual([]);
+  });
+
   test("fails when a producer proposes a change that cannot be projected", async () => {
     const library = {
       cachedAt: new Date(),

@@ -202,4 +202,38 @@ describe("review tree and producer safety", () => {
       },
     ]);
   });
+
+  test("shows combining multi-value tags as a review change", () => {
+    const tree = buildTree(
+      [
+        {
+          id: "combine-artists",
+          operation: {
+            id: "combine-artists",
+            path: "/music/song.flac",
+            tags: { artist: "Artist One, Artist Two" },
+            type: "tag-update" as const,
+            producedBy: "combine-artist-tags",
+            metadata: {
+              filePath: "/music/song.flac",
+              previousTags: { artist: ["Artist One", "Artist Two"] },
+            },
+          },
+          status: "accepted" as const,
+        },
+      ],
+      "/music",
+    );
+    const group = tree[0]?.leafChildren[0]?.group;
+
+    expect(group && getOperationChanges(group)).toEqual([
+      {
+        after: "Artist One, Artist Two",
+        before: "[Artist One, Artist Two]",
+        field: "artist",
+        id: "combine-artists:artist",
+        producer: "combine-artist-tags",
+      },
+    ]);
+  });
 });

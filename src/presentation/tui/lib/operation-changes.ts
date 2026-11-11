@@ -11,7 +11,11 @@ type OperationChange = {
 
 function displayValue(value: unknown): string {
   if (value === undefined || value === null || value === "") return "(empty)";
-  return Array.isArray(value) ? value.join(", ") || "(empty)" : String(value);
+  if (!Array.isArray(value)) return String(value);
+
+  const formatted = value.join(", ");
+  if (!formatted) return "(empty)";
+  return value.length > 1 ? `[${formatted}]` : formatted;
 }
 
 function getPreviousTags(

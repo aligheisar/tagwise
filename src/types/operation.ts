@@ -14,7 +14,7 @@ interface RenameOperation extends BaseOperation {
 interface TagUpdateOperation extends BaseOperation {
   description?: string;
   path: string;
-  tags: Record<string, string | number>;
+  tags: Record<string, string | string[] | number>;
   type: "tag-update";
 }
 

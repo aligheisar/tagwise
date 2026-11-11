@@ -16,10 +16,17 @@ function getTargetPath(operation: Operation): string | null {
 
 function isNoopTagUpdate(
   currentTags: Record<string, unknown>,
-  updates: Record<string, string | number>,
+  updates: Record<string, string | string[] | number>,
 ): boolean {
   return Object.entries(updates).every(([key, nextValue]) => {
     const currentValue = currentTags[key];
+    if (Array.isArray(nextValue)) {
+      return (
+        Array.isArray(currentValue) &&
+        currentValue.length === nextValue.length &&
+        currentValue.every((value, index) => value === nextValue[index])
+      );
+    }
     if (Array.isArray(currentValue)) {
       return currentValue.length === 1 && currentValue[0] === nextValue;
     }
