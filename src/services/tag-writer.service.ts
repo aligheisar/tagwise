@@ -5,7 +5,7 @@ import { logger } from "#/utils/logger";
 
 type TagUpdate = {
   path: string;
-  tags: Record<string, string | number>;
+  tags: Record<string, string | string[] | number>;
 };
 
 type TagWriteError = {

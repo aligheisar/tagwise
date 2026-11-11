@@ -26,6 +26,13 @@ With no command, Tagwise starts the terminal interface. The TUI lets you scan
 or select a cached library, review producers' proposed changes, and choose
 which changes to apply.
 
+The built-in **Split Artist Tags** producer splits comma-separated artist and
+album artist values into multiple tags for FLAC, MP3, M4A, and MP4 files. For
+MP3 files it also splits semicolon-separated values and removes duplicates.
+**Combine Artist Tags** joins multiple values into a comma-separated value.
+These modes are not always inverses: if a tag value itself contains a comma,
+combining it and then splitting can turn that one value into multiple values.
+
 ## Configuration
 
 All settings are optional and can be set as environment variables:

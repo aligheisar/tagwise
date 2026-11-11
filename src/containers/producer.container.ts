@@ -1,4 +1,5 @@
 import { config } from "#/config";
+import { ArtistTagSeparatorProducer } from "#/lib/producers/artist-tag-separator";
 import { RemixTagProducer } from "#/lib/producers/remix-tag";
 import { RemoveRemixTagProducer } from "#/lib/producers/remove-remix-tag";
 import { RenamerProducer } from "#/lib/producers/renamer";
@@ -12,6 +13,8 @@ const producerRepository = new ProducerRepository();
 producerRepository.register(new RenamerProducer());
 producerRepository.register(new RemixTagProducer());
 producerRepository.register(new RemoveRemixTagProducer());
+producerRepository.register(new ArtistTagSeparatorProducer("split"));
+producerRepository.register(new ArtistTagSeparatorProducer("combine"));
 
 const loadedProducers = await loadProducers(config.producersDir);
 for (const producer of loadedProducers.producers) {
