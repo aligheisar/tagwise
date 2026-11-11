@@ -35,18 +35,20 @@ export function ProducerDetailModal({
   const { colors } = useTheme();
   const argumentsList = producer.args ?? [];
   const [focusIndex, setFocusIndex] = useState(0);
-  const { setHelpShortcutEnabled } = useApp();
+  const { helpOpen, setHelpShortcutEnabled } = useApp();
 
   const focusedArgument = argumentsList[focusIndex];
 
   useEffect(() => {
     setHelpShortcutEnabled(
-      !focusedArgument || !isTextArgument(focusedArgument),
+      helpOpen || !focusedArgument || !isTextArgument(focusedArgument),
     );
     return () => setHelpShortcutEnabled(true);
-  }, [focusedArgument, setHelpShortcutEnabled]);
+  }, [focusedArgument, helpOpen, setHelpShortcutEnabled]);
 
   useKeyboard((key) => {
+    if (helpOpen) return;
+
     if (key.name === "tab" && argumentsList.length > 0) {
       setFocusIndex(
         (index) =>
@@ -90,7 +92,7 @@ export function ProducerDetailModal({
         borderColor={colors.accent}
         closeHint="Tab: next input | Space: toggle | Esc: close"
         height="100%"
-        onClose={onClose}
+        onClose={helpOpen ? undefined : onClose}
         open
         title={producer.title ?? producer.name}
         width="100%"

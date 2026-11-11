@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -8,6 +8,14 @@ import {
 } from "../src/services/producer-scaffold.service";
 
 let temporaryDirectory = "";
+
+const legacyProducerTypeSource = `export type Producer = {
+  name: string;
+  title: string;
+  version: string;
+  description?: string;
+  produce(library: ProducerLibrary): Promise<ProducerOperation[]>;
+};`;
 
 afterEach(async () => {
   if (temporaryDirectory) {
@@ -127,5 +135,54 @@ describe("producer scaffolding", () => {
     await expect(
       createProducerFile(temporaryDirectory, details),
     ).rejects.toThrow("Producer file already exists");
+  });
+
+  test("migrates generated producer types while preserving user content", async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(os.tmpdir(), "tagwise-producer-scaffold-"),
+    );
+    const producerDirectory = path.join(temporaryDirectory, "producers");
+    const typesFilePath = path.join(temporaryDirectory, "producer-types.ts");
+    const customTypes = `export type UserSetting = { enabled: boolean };`;
+    await writeFile(
+      typesFilePath,
+      `${customTypes}\n\n${legacyProducerTypeSource}\n`,
+      "utf8",
+    );
+
+    await createProducerFile(producerDirectory, {
+      title: "Test Producer",
+      version: "1.0.0",
+    });
+
+    const migratedTypes = await readFile(typesFilePath, "utf8");
+    expect(migratedTypes).toContain(customTypes);
+    expect(migratedTypes).toContain("export type ProducerArgument =");
+    expect(migratedTypes).toContain("export type ProducerArguments =");
+    expect(migratedTypes).toContain("args?: ProducerArgument[];");
+    expect(migratedTypes).toContain("args?: ProducerArguments");
+    expect(migratedTypes).not.toContain(
+      "produce(library: ProducerLibrary): Promise<ProducerOperation[]>;",
+    );
+  });
+
+  test("leaves customized producer types untouched", async () => {
+    temporaryDirectory = await mkdtemp(
+      path.join(os.tmpdir(), "tagwise-producer-scaffold-"),
+    );
+    const producerDirectory = path.join(temporaryDirectory, "producers");
+    const typesFilePath = path.join(temporaryDirectory, "producer-types.ts");
+    const customizedTypes = legacyProducerTypeSource.replace(
+      "  name: string;",
+      "  name: string;\n  customField: boolean;",
+    );
+    await writeFile(typesFilePath, customizedTypes, "utf8");
+
+    await createProducerFile(producerDirectory, {
+      title: "Test Producer",
+      version: "1.0.0",
+    });
+
+    expect(await readFile(typesFilePath, "utf8")).toBe(customizedTypes);
   });
 });

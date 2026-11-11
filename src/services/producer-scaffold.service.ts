@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 type ProducerScaffoldDetails = {
@@ -62,6 +62,60 @@ const producer: Producer = {
 export default producer;
 `;
 }
+
+const producerArgumentTypeSource = `export type ProducerArgument =
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "string";
+      default?: string;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "number";
+      default?: number;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "boolean";
+      default?: boolean;
+    }
+  | {
+      key: string;
+      title: string;
+      description?: string;
+      type: "select";
+      options: { label: string; value: string }[];
+      default?: string;
+    };`;
+
+const producerArgumentsTypeSource =
+  "export type ProducerArguments = Record<string, string | number | boolean>;";
+
+const producerTypeSource = `export type Producer = {
+  name: string;
+  title: string;
+  version: string;
+  description?: string;
+  args?: ProducerArgument[];
+  produce(
+    library: ProducerLibrary,
+    args?: ProducerArguments
+  ): Promise<ProducerOperation[]>;
+};`;
+
+const legacyProducerTypeSource = `export type Producer = {
+  name: string;
+  title: string;
+  version: string;
+  description?: string;
+  produce(library: ProducerLibrary): Promise<ProducerOperation[]>;
+};`;
 
 function createProducerTypesSource(): string {
   return `export type SongTags = {
@@ -152,51 +206,47 @@ export type TagUpdateOperation = {
 
 export type ProducerOperation = RenameOperation | TagUpdateOperation;
 
-export type ProducerArgument =
-  | {
-      key: string;
-      title: string;
-      description?: string;
-      type: "string";
-      default?: string;
-    }
-  | {
-      key: string;
-      title: string;
-      description?: string;
-      type: "number";
-      default?: number;
-    }
-  | {
-      key: string;
-      title: string;
-      description?: string;
-      type: "boolean";
-      default?: boolean;
-    }
-  | {
-      key: string;
-      title: string;
-      description?: string;
-      type: "select";
-      options: { label: string; value: string }[];
-      default?: string;
-    };
+${producerArgumentTypeSource}
 
-export type ProducerArguments = Record<string, string | number | boolean>;
+${producerArgumentsTypeSource}
 
-export type Producer = {
-  name: string;
-  title: string;
-  version: string;
-  description?: string;
-  args?: ProducerArgument[];
-  produce(
-    library: ProducerLibrary,
-    args?: ProducerArguments
-  ): Promise<ProducerOperation[]>;
-};
+${producerTypeSource}
 `;
+}
+
+function migrateProducerTypesSource(source: string): string | undefined {
+  const lineEnding = source.includes("\r\n") ? "\r\n" : "\n";
+  const normalizedSource = source.replace(/\r\n/g, "\n");
+  const legacyIndex = normalizedSource.indexOf(legacyProducerTypeSource);
+
+  // The old scaffold had no markers, so only migrate its exact generated declaration.
+  if (
+    legacyIndex === -1 ||
+    normalizedSource.indexOf(
+      legacyProducerTypeSource,
+      legacyIndex + legacyProducerTypeSource.length,
+    ) !== -1
+  ) {
+    return undefined;
+  }
+
+  const hasType = (name: string) =>
+    new RegExp(
+      `\\b(?:export\\s+)?(?:type|interface)\\s+${name}\\b|\\bimport\\b[^;]*\\b${name}\\b`,
+    ).test(normalizedSource);
+  const missingTypes = [
+    !hasType("ProducerArgument") ? producerArgumentTypeSource : undefined,
+    !hasType("ProducerArguments") ? producerArgumentsTypeSource : undefined,
+  ].filter((type): type is string => type !== undefined);
+  const replacement = [...missingTypes, producerTypeSource].join("\n\n");
+  const migratedSource =
+    normalizedSource.slice(0, legacyIndex) +
+    replacement +
+    normalizedSource.slice(legacyIndex + legacyProducerTypeSource.length);
+
+  return lineEnding === "\n"
+    ? migratedSource
+    : migratedSource.replace(/\n/g, lineEnding);
 }
 
 async function writeTypesFileIfMissing(filePath: string): Promise<void> {
@@ -208,6 +258,11 @@ async function writeTypesFileIfMissing(filePath: string): Promise<void> {
     });
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "EEXIST") {
+      const existingSource = await readFile(filePath, "utf8");
+      const migratedSource = migrateProducerTypesSource(existingSource);
+      if (migratedSource !== undefined) {
+        await writeFile(filePath, migratedSource, { encoding: "utf8" });
+      }
       return;
     }
     throw error;
