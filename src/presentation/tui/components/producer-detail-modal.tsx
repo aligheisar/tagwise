@@ -1,11 +1,12 @@
 import { useKeyboard } from "@opentui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   Producer,
   ProducerArgument,
   ProducerArgumentInputValues,
 } from "#/types/producer";
 import { Modal } from "@/components/ui/modal";
+import { useApp } from "@/hooks/use-app";
 import { useTheme } from "@/hooks/use-theme";
 
 type ProducerDetailModalProps = {
@@ -34,6 +35,16 @@ export function ProducerDetailModal({
   const { colors } = useTheme();
   const argumentsList = producer.args ?? [];
   const [focusIndex, setFocusIndex] = useState(0);
+  const { setHelpShortcutEnabled } = useApp();
+
+  const focusedArgument = argumentsList[focusIndex];
+
+  useEffect(() => {
+    setHelpShortcutEnabled(
+      !focusedArgument || !isTextArgument(focusedArgument),
+    );
+    return () => setHelpShortcutEnabled(true);
+  }, [focusedArgument, setHelpShortcutEnabled]);
 
   useKeyboard((key) => {
     if (key.name === "tab" && argumentsList.length > 0) {
