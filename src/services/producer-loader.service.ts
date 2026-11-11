@@ -14,6 +14,7 @@ type ProducerLoadResult = {
   errors: ProducerLoadError[];
 };
 
+/** Checks whether an unknown value is a valid producer argument definition. */
 function isProducerArgument(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
   const argument = value as Record<string, unknown>;
@@ -23,7 +24,8 @@ function isProducerArgument(value: unknown): boolean {
     typeof argument.title !== "string" ||
     argument.title.trim().length === 0 ||
     (argument.description !== undefined &&
-      typeof argument.description !== "string")
+      typeof argument.description !== "string") ||
+    (argument.required !== undefined && typeof argument.required !== "boolean")
   ) {
     return false;
   }
@@ -41,9 +43,7 @@ function isProducerArgument(value: unknown): boolean {
     );
   }
   if (argument.type === "boolean") {
-    return (
-      argument.default === undefined || typeof argument.default === "boolean"
-    );
+    return typeof argument.default === "boolean";
   }
   if (argument.type === "select") {
     if (
@@ -57,11 +57,8 @@ function isProducerArgument(value: unknown): boolean {
           option.label.trim().length > 0 &&
           typeof option.value === "string",
       ) ||
-      (argument.default !== undefined &&
-        (typeof argument.default !== "string" ||
-          !argument.options.some(
-            (option) => option.value === argument.default,
-          )))
+      typeof argument.default !== "string" ||
+      !argument.options.some((option) => option.value === argument.default)
     ) {
       return false;
     }
@@ -70,6 +67,7 @@ function isProducerArgument(value: unknown): boolean {
   return false;
 }
 
+/** Checks whether an unknown module export satisfies the producer contract. */
 function isProducer(value: unknown): value is Producer {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Record<string, unknown>;
@@ -91,6 +89,7 @@ function isProducer(value: unknown): value is Producer {
   );
 }
 
+/** Loads valid producer modules and records errors for modules that fail. */
 async function loadProducers(directory: string): Promise<ProducerLoadResult> {
   let entries: Dirent[];
   try {

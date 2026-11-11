@@ -9,7 +9,11 @@ import {
   createProducerTypesSource,
   producerNameFromTitle,
 } from "../src/services/producer-scaffold.service";
-import { defineProducer } from "../src/types/producer";
+import {
+  defineProducer,
+  type Producer,
+  type ProducerArgument,
+} from "../src/types/producer";
 
 let temporaryDirectory = "";
 
@@ -97,7 +101,8 @@ describe("producer scaffolding", () => {
     expect(source).toContain('name: "test-producer"');
     expect(source).toContain('title: "Test Producer"');
     expect(source).toContain('type: "tag-update"');
-    expect(source).toContain("async produce(library, args = {})");
+    expect(source).toContain("async produce(library, args)");
+    expect(source).not.toContain("producedBy");
     expect(source).toContain(
       'import { defineProducer } from "../producer-types"',
     );
@@ -112,10 +117,10 @@ describe("producer scaffolding", () => {
     expect(sharedTypes).toContain("export type ProducerArguments<");
     expect(sharedTypes).toContain("export type ProducerArgument");
     expect(sharedTypes).toContain("export function defineProducer");
-    expect(sharedTypes).toContain('Arguments[number] as Argument["key"]');
     expect(sharedTypes).toContain(
       "args?: Arguments extends readonly ProducerArgument[]",
     );
+    expect(sharedTypes).toContain(": readonly ProducerArgument[]");
     expect(sharedTypes).toContain("export type SongTags");
     expect(sharedTypes).toContain(
       "tags: Record<string, string | string[] | number>",
@@ -215,18 +220,18 @@ describe("producer scaffolding", () => {
 
     const migratedTypes = await readFile(typesFilePath, "utf8");
     expect(migratedTypes).toContain(customTypes);
-    expect(migratedTypes).toContain("export type ProducerArgument =");
+    expect(migratedTypes).toContain("export type ProducerArgument<");
     expect(migratedTypes).toContain("export type ProducerArguments<");
     expect(migratedTypes).toContain(
       "args?: Arguments extends readonly ProducerArgument[]",
     );
-    expect(migratedTypes).toContain("args?: ProducerArguments");
+    expect(migratedTypes).toContain("args: ProducerArguments<Arguments>");
     expect(migratedTypes).not.toContain(
       "produce(library: ProducerLibrary): Promise<ProducerOperation[]>;",
     );
   });
 
-  test("leaves customized producer types untouched", async () => {
+  test("does not scaffold when customized types omit defineProducer", async () => {
     temporaryDirectory = await mkdtemp(
       path.join(os.tmpdir(), "tagwise-producer-scaffold-"),
     );
@@ -238,12 +243,19 @@ describe("producer scaffolding", () => {
     );
     await writeFile(typesFilePath, customizedTypes, "utf8");
 
-    await createProducerFile(producerDirectory, {
-      title: "Test Producer",
-      version: "1.0.0",
-    });
+    await expect(
+      createProducerFile(producerDirectory, {
+        title: "Test Producer",
+        version: "1.0.0",
+      }),
+    ).rejects.toThrow(
+      "does not export defineProducer. Add a value export named defineProducer",
+    );
 
     expect(await readFile(typesFilePath, "utf8")).toBe(customizedTypes);
+    await expect(
+      readFile(path.join(producerDirectory, "test-producer.ts"), "utf8"),
+    ).rejects.toThrow();
   });
 
   test("migrates the previous argument type declarations", async () => {
@@ -272,8 +284,7 @@ describe("producer scaffolding", () => {
     const migratedTypes = await readFile(typesFilePath, "utf8");
     expect(migratedTypes).toContain(customTypes);
     expect(migratedTypes).toContain("type ProducerArgumentValue<");
-    expect(migratedTypes).toContain('Arguments[number] as Argument["key"]');
-    expect(migratedTypes).toContain("args?: ProducerArguments<Arguments>");
+    expect(migratedTypes).toContain("args: ProducerArguments<Arguments>");
     expect(migratedTypes).toContain("export function defineProducer");
     expect(migratedTypes).not.toContain(previousProducerTypeSource);
   });
@@ -290,8 +301,20 @@ describe("producer scaffolding", () => {
           type: "string",
           default: ", ",
         },
-        { key: "limit", title: "Limit", type: "number" },
-        { key: "enabled", title: "Enabled", type: "boolean" },
+        {
+          key: "fallback",
+          title: "Fallback",
+          type: "string",
+          required: true,
+          default: "value",
+        },
+        { key: "limit", title: "Limit", type: "number", required: true },
+        {
+          key: "enabled",
+          title: "Enabled",
+          type: "boolean",
+          default: false,
+        },
         {
           key: "mode",
           title: "Mode",
@@ -300,38 +323,99 @@ describe("producer scaffolding", () => {
             { label: "Combine", value: "combine" },
             { label: "Split", value: "split" },
           ],
+          default: "combine",
         },
       ],
-      async produce(_library, args = {}) {
+      async produce(_library, args) {
         const values: {
           separator?: string;
-          limit?: number;
-          enabled?: boolean;
-          mode?: "combine" | "split";
+          fallback?: string;
+          limit: number;
+          enabled: boolean;
+          mode: "combine" | "split";
         } = args;
+        const separator: string = args.separator;
+        const fallback: string = args.fallback;
+        const limit: number = args.limit;
+        const enabled: boolean = args.enabled;
+        const mode: "combine" | "split" = args.mode;
         // @ts-expect-error Unknown argument keys should not autocomplete.
         args.unknown;
+        void separator;
+        void fallback;
+        void limit;
+        void enabled;
+        void mode;
         void values;
         return [];
       },
     });
 
-    expect(producer.args).toHaveLength(4);
+    expect(producer.args).toHaveLength(5);
+    const compatibleProducer: Producer = producer;
+    expect(compatibleProducer.name).toBe(producer.name);
+
+    defineProducer({
+      name: "invalid-select-default",
+      title: "Invalid Select Default",
+      version: "1.0.0",
+      args: [
+        // @ts-expect-error Select defaults must match an option value.
+        {
+          key: "mode",
+          title: "Mode",
+          type: "select",
+          options: [{ label: "One", value: "one" }],
+          default: "two",
+        },
+      ],
+      async produce() {
+        return [];
+      },
+    });
+
+    type NarrowSelectOptions = readonly [{ label: "One"; value: "one" }];
+    type NarrowSelectArgument = Extract<
+      ProducerArgument<NarrowSelectOptions>,
+      { type: "select" }
+    >;
+    const invalidSelectArgument: NarrowSelectArgument = {
+      key: "mode",
+      title: "Mode",
+      type: "select",
+      options: [{ label: "One", value: "one" }],
+      // @ts-expect-error Select defaults must match an option value.
+      default: "two",
+    };
+    void invalidSelectArgument;
   });
 
   test("generated producer types infer arguments and reject unknown keys", () => {
     const producerFile = "/virtual/producers/inferred.ts";
     const typesFile = "/virtual/producer-types.ts";
-    const producerSource = createProducerSource("inferred", {
-      title: "Inferred",
-      version: "1.0.0",
-    })
-      .replace(
-        `  // Example: args: [{ key: "separator", title: "Separator", type: "string", default: ", " }],`,
-        `  args: [
+    const producerSource =
+      createProducerSource("inferred", {
+        title: "Inferred",
+        version: "1.0.0",
+      })
+        .replace(
+          `  // Example: args: [{ key: "separator", title: "Separator", type: "string", default: ", " }],`,
+          `  args: [
     { key: "separator", title: "Separator", type: "string", default: ", " },
-    { key: "limit", title: "Limit", type: "number" },
-    { key: "enabled", title: "Enabled", type: "boolean" },
+    {
+      key: "fallback",
+      title: "Fallback",
+      type: "string",
+      required: true,
+      default: "value",
+    },
+    { key: "limit", title: "Limit", type: "number", required: true },
+    {
+      key: "enabled",
+      title: "Enabled",
+      type: "boolean",
+      default: false,
+    },
     {
     key: "mode",
     title: "Mode",
@@ -340,18 +424,39 @@ describe("producer scaffolding", () => {
       { label: "Combine", value: "combine" },
       { label: "Split", value: "split" },
     ],
+    default: "combine",
     },
   ],`,
-      )
-      .replace(
-        `    // For the example above: const separator = args.separator ?? ", ";`,
-        `    const typedSeparator: string | undefined = args.separator;
-    const typedLimit: number | undefined = args.limit;
-    const typedEnabled: boolean | undefined = args.enabled;
-    const typedMode: "combine" | "split" | undefined = args.mode;
+        )
+        .replace(
+          `    // For the example above: const separator = args.separator ?? ", ";`,
+          `    const typedSeparator: string = args.separator;
+    const typedFallback: string = args.fallback;
+    const typedLimit: number = args.limit;
+    const typedEnabled: boolean = args.enabled;
+    const typedMode: "combine" | "split" = args.mode;
     // @ts-expect-error Unknown argument names are rejected.
     args.unknown;`,
-      );
+        ) +
+      `
+defineProducer({
+  name: "invalid-select-default",
+  title: "Invalid Select Default",
+  version: "1.0.0",
+  args: [
+    // @ts-expect-error Select defaults must match an option value.
+    {
+      key: "mode",
+      title: "Mode",
+      type: "select",
+      options: [{ label: "One", value: "one" }],
+      default: "two",
+    },
+  ],
+  async produce() {
+    return [];
+  },
+});`;
     const files = new Map([
       [producerFile, producerSource],
       [typesFile, createProducerTypesSource()],

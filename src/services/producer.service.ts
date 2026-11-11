@@ -17,10 +17,14 @@ class ProducerService {
       throw new Error(`Unknown producer: ${producerName}`);
     }
 
-    return producer.produce(library, {
+    const operations = await producer.produce(library, {
       ...getProducerArgumentDefaults(producer),
       ...args,
     });
+    return operations.map((operation) => ({
+      ...operation,
+      producedBy: producer.name,
+    }));
   }
 
   getAll(): Producer[] {

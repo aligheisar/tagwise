@@ -20,6 +20,20 @@ const producer: Producer = {
       ],
       default: "first",
     },
+    {
+      key: "requiredText",
+      title: "Required text",
+      type: "string",
+      required: true,
+    },
+    { key: "optionalText", title: "Optional text", type: "string" },
+    {
+      key: "defaultedRequired",
+      title: "Defaulted required",
+      type: "string",
+      required: true,
+      default: "fallback",
+    },
   ],
   name: "test",
   title: "Test",
@@ -35,8 +49,9 @@ describe("producer argument form values", () => {
 
     expect(initialValues).toEqual({
       count: "5",
-      enabled: true,
+      defaultedRequired: "fallback",
       mode: "first",
+      enabled: true,
       text: "initial",
     });
     expect(
@@ -44,13 +59,47 @@ describe("producer argument form values", () => {
         count: "12",
         enabled: false,
         mode: "second",
+        requiredText: "provided",
+        defaultedRequired: "fallback",
         text: "updated",
       }),
     ).toEqual({
       count: 12,
       enabled: false,
       mode: "second",
+      requiredText: "provided",
+      defaultedRequired: "fallback",
       text: "updated",
+    });
+  });
+
+  test("requires marked fields and resolves defaults for unset fields", () => {
+    expect(() =>
+      resolveProducerArgumentValues(producer, {
+        count: "5",
+        enabled: true,
+        mode: "first",
+        defaultedRequired: "fallback",
+        requiredText: "",
+        text: "initial",
+      }),
+    ).toThrow('"Required text" is required');
+
+    expect(
+      resolveProducerArgumentValues(producer, {
+        count: "5",
+        enabled: true,
+        mode: "first",
+        requiredText: "present",
+        text: "initial",
+      }),
+    ).toEqual({
+      count: 5,
+      defaultedRequired: "fallback",
+      enabled: true,
+      mode: "first",
+      requiredText: "present",
+      text: "initial",
     });
   });
 

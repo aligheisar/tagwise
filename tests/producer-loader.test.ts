@@ -44,6 +44,33 @@ describe("loadProducers", () => {
 
     expect(
       isProducer({
+        args: [{ key: "enabled", title: "Enabled", type: "boolean" }],
+        name: "missing-boolean-default",
+        async produce() {
+          return [];
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      isProducer({
+        args: [
+          {
+            key: "mode",
+            title: "Mode",
+            type: "select",
+            options: [{ label: "First", value: "first" }],
+          },
+        ],
+        name: "missing-select-default",
+        async produce() {
+          return [];
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      isProducer({
         args: [{ key: "mode", title: "Mode", type: "select", options: [] }],
         name: "invalid",
         async produce() {

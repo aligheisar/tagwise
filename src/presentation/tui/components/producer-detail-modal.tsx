@@ -21,10 +21,12 @@ type TextArgument =
   | Extract<ProducerArgument, { type: "string" }>
   | Extract<ProducerArgument, { type: "number" }>;
 
+/** Narrows arguments rendered by text inputs. */
 function isTextArgument(argument: ProducerArgument): argument is TextArgument {
   return argument.type === "string" || argument.type === "number";
 }
 
+/** Displays producer metadata and editable argument controls. */
 export function ProducerDetailModal({
   error,
   onChange,
@@ -49,6 +51,11 @@ export function ProducerDetailModal({
   useKeyboard((key) => {
     if (helpOpen) return;
 
+    if (key.name === "return" || key.name === "enter") {
+      onClose();
+      return;
+    }
+
     if (key.name === "tab" && argumentsList.length > 0) {
       setFocusIndex(
         (index) =>
@@ -63,16 +70,23 @@ export function ProducerDetailModal({
       onChange(argument.key, values[argument.key] !== true);
     } else if (
       argument?.type === "select" &&
-      (key.name === "left" || key.name === "right")
+      (key.name === "left" ||
+        key.name === "right" ||
+        key.name === "h" ||
+        key.name === "l")
     ) {
       const options = argument.options;
       if (options.length === 0) return;
       const currentIndex = options.findIndex(
         (option) => option.value === values[argument.key],
       );
-      const direction = key.name === "right" ? 1 : -1;
+      const direction = key.name === "right" || key.name === "l" ? 1 : -1;
       const nextIndex =
-        (currentIndex + direction + options.length) % options.length;
+        currentIndex < 0
+          ? direction > 0
+            ? 0
+            : options.length - 1
+          : (currentIndex + direction + options.length) % options.length;
       const nextOption = options[nextIndex];
       if (nextOption) onChange(argument.key, nextOption.value);
     }
@@ -90,7 +104,7 @@ export function ProducerDetailModal({
       <Modal
         backgroundColor={colors.background}
         borderColor={colors.accent}
-        closeHint="Tab: next input | Space: toggle | Esc: close"
+        closeHint="Tab: next | Space: toggle | h/l: select | Enter/Esc: close"
         height="100%"
         onClose={helpOpen ? undefined : onClose}
         open
@@ -114,20 +128,25 @@ export function ProducerDetailModal({
                   <text fg={isFocused ? colors.accent : colors.foreground}>
                     {isFocused ? "› " : "  "}
                     {argument.title}
+                    {argument.required === true &&
+                      argument.default === undefined &&
+                      " (required)"}
                   </text>
                   {argument.description && (
                     <text fg={colors.muted}>{`  ${argument.description}`}</text>
                   )}
                   {isTextArgument(argument) ? (
-                    <input
-                      focused={isFocused}
-                      onChange={(nextValue) =>
-                        onChange(argument.key, nextValue)
-                      }
-                      placeholder={argument.type === "number" ? "0" : ""}
-                      value={String(value ?? "")}
-                      width="100%"
-                    />
+                    <box paddingX={2}>
+                      <input
+                        focused={isFocused}
+                        onChange={(nextValue) =>
+                          onChange(argument.key, nextValue)
+                        }
+                        placeholder={argument.type === "number" ? "0" : ""}
+                        value={String(value ?? "")}
+                        width="100%"
+                      />
+                    </box>
                   ) : argument.type === "boolean" ? (
                     <text fg={isFocused ? colors.accent : colors.foreground}>
                       {`  [${value === true ? "x" : " "}] ${value === true ? "Enabled" : "Disabled"}  (Space to toggle)`}

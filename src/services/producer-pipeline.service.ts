@@ -2,14 +2,18 @@ import { MutableLibrary } from "#/lib/mutable-library";
 import { getProducerArgumentDefaults } from "#/lib/producer-arguments";
 import type { Library } from "#/types/library";
 import type { Operation } from "#/types/operation";
-import type { Producer, ProducerArguments } from "#/types/producer";
+import type {
+  Producer,
+  ProducerArguments,
+  ProducerOperation,
+} from "#/types/producer";
 
 type ProducerPipelineResult = {
   operations: Operation[];
   projectedLibrary: ReturnType<MutableLibrary["snapshot"]>;
 };
 
-function getTargetPath(operation: Operation): string | null {
+function getTargetPath(operation: ProducerOperation): string | null {
   if (operation.type === "rename") return operation.oldPath;
   if (operation.type === "tag-update") return operation.path;
   return null;
@@ -59,7 +63,11 @@ async function runProducerPipeline(
       throw new Error(`Producer "${producer.name}" must return an array`);
     }
 
-    for (const operation of generated) {
+    for (const proposal of generated) {
+      const operation: Operation = {
+        ...proposal,
+        producedBy: producer.name,
+      };
       const currentPath = getTargetPath(operation);
       if (currentPath === null) {
         projection.applyOperation(operation);
