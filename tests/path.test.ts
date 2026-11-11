@@ -187,15 +187,15 @@ describe("review tree and producer safety", () => {
     expect(group?.operations).toHaveLength(2);
     expect(group && getOperationChanges(group)).toEqual([
       {
-        after: "Song (Remix)",
-        before: "Song",
+        after: 'string:"Song (Remix)"',
+        before: 'array:["Song"]',
         field: "title",
         id: "tag-update-0:title",
         producer: "add-remix",
       },
       {
-        after: "Song",
-        before: "Song (Remix)",
+        after: 'string:"Song"',
+        before: 'array:["Song (Remix)"]',
         field: "title",
         id: "tag-update-1:title",
         producer: "remove-remix",
@@ -228,8 +228,8 @@ describe("review tree and producer safety", () => {
 
     expect(group && getOperationChanges(group)).toEqual([
       {
-        after: "Artist One, Artist Two",
-        before: "[Artist One, Artist Two]",
+        after: 'string:"Artist One, Artist Two"',
+        before: 'array:["Artist One","Artist Two"]',
         field: "artist",
         id: "combine-artists:artist",
         producer: "combine-artist-tags",
@@ -237,7 +237,41 @@ describe("review tree and producer safety", () => {
     ]);
   });
 
-  test("detects distinct original tag values with identical display strings", () => {
+  test("shows splitting a comma-containing artist value as a review change", () => {
+    const tree = buildTree(
+      [
+        {
+          id: "split-artists",
+          operation: {
+            id: "split-artists",
+            path: "/music/song.flac",
+            tags: { artist: ["Artist One", "Artist Two"] },
+            type: "tag-update" as const,
+            producedBy: "split-artist-tags",
+            metadata: {
+              filePath: "/music/song.flac",
+              previousTags: { artist: ["Artist One, Artist Two"] },
+            },
+          },
+          status: "accepted" as const,
+        },
+      ],
+      "/music",
+    );
+    const group = tree[0]?.leafChildren[0]?.group;
+
+    expect(group && getOperationChanges(group)).toEqual([
+      {
+        after: 'array:["Artist One","Artist Two"]',
+        before: 'array:["Artist One, Artist Two"]',
+        field: "artist",
+        id: "split-artists:artist",
+        producer: "split-artist-tags",
+      },
+    ]);
+  });
+
+  test("distinguishes scalar strings that resemble formatted arrays", () => {
     const tree = buildTree(
       [
         {
@@ -245,7 +279,7 @@ describe("review tree and producer safety", () => {
           operation: {
             id: "ambiguous-tag",
             path: "/music/song.flac",
-            tags: { artist: "[Artist One, Artist Two]" },
+            tags: { artist: 'array:["Artist One","Artist Two"]' },
             type: "tag-update" as const,
             producedBy: "test",
             metadata: {
@@ -262,8 +296,8 @@ describe("review tree and producer safety", () => {
 
     expect(group && getOperationChanges(group)).toEqual([
       {
-        after: "[Artist One, Artist Two]",
-        before: "[Artist One, Artist Two]",
+        after: 'string:"array:[\\"Artist One\\",\\"Artist Two\\"]"',
+        before: 'array:["Artist One","Artist Two"]',
         field: "artist",
         id: "ambiguous-tag:artist",
         producer: "test",

@@ -9,14 +9,12 @@ type OperationChange = {
   producer: string;
 };
 
-/** Formats tag values for review, distinguishing multi-value tags from strings. */
+/** Formats tag values with explicit types and unambiguous array boundaries. */
 function displayValue(value: unknown): string {
   if (value === undefined || value === null || value === "") return "(empty)";
-  if (!Array.isArray(value)) return String(value);
-
-  const formatted = value.join(", ");
-  if (!formatted) return "(empty)";
-  return value.length > 1 ? `[${formatted}]` : formatted;
+  if (Array.isArray(value)) return `array:${JSON.stringify(value)}`;
+  if (typeof value === "string") return `string:${JSON.stringify(value)}`;
+  return String(value);
 }
 
 /** Compares tag values structurally before formatting can obscure differences. */
