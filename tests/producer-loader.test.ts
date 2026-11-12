@@ -2,7 +2,10 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { loadProducers } from "../src/services/producer-loader.service";
+import {
+  isProducer,
+  loadProducers,
+} from "../src/services/producer-loader.service";
 
 let temporaryDirectory = "";
 
@@ -14,6 +17,69 @@ afterEach(async () => {
 });
 
 describe("loadProducers", () => {
+  test("accepts producers that declare typed arguments", () => {
+    expect(
+      isProducer({
+        args: [
+          { key: "text", title: "Text", type: "string", default: "value" },
+          { key: "count", title: "Count", type: "number", default: 2 },
+          { key: "enabled", title: "Enabled", type: "boolean", default: true },
+          {
+            key: "mode",
+            title: "Mode",
+            type: "select",
+            options: [
+              { label: "First", value: "first" },
+              { label: "Second", value: "second" },
+            ],
+            default: "first",
+          },
+        ],
+        name: "custom",
+        async produce() {
+          return [];
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      isProducer({
+        args: [{ key: "enabled", title: "Enabled", type: "boolean" }],
+        name: "missing-boolean-default",
+        async produce() {
+          return [];
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      isProducer({
+        args: [
+          {
+            key: "mode",
+            title: "Mode",
+            type: "select",
+            options: [{ label: "First", value: "first" }],
+          },
+        ],
+        name: "missing-select-default",
+        async produce() {
+          return [];
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      isProducer({
+        args: [{ key: "mode", title: "Mode", type: "select", options: [] }],
+        name: "invalid",
+        async produce() {
+          return [];
+        },
+      }),
+    ).toBe(false);
+  });
+
   test("loads valid ESM modules in stable filename order and isolates invalid ones", async () => {
     temporaryDirectory = await mkdtemp(
       path.join(os.tmpdir(), "tagwise-producers-test-"),

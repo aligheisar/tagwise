@@ -54,9 +54,50 @@ caches with `bun run src/main.ts cache purge`.
 Add `.js`, `.mjs`, or `.ts` ESM modules to
 `$XDG_CONFIG_HOME/tagwise/producers` (default: `~/.config/tagwise/producers`).
 Each module must default-export an object with a unique, non-empty `name`, an
-async `produce(library)` function, and optional `description` and `version`
-strings. Producers return rename or tag-update operations; they do not apply
-filesystem changes directly.
+async `produce(library, args)` function, a `title`, and a string `version`;
+`description` and `args` definitions are optional. Each argument has a unique
+`key`, a `title`, a `type` (`string`, `number`, `boolean`, or `select`), and
+optional `description` and `required` fields. String and number arguments can
+omit a type-appropriate `default`; boolean and select arguments require a
+default, and a select default must match one of its option values.
+Arguments marked `required` or given a `default` are non-optional in `produce`;
+only arguments with neither can be `undefined`. Select arguments also provide
+`options` with `label` and `value` strings. The TUI exposes these definitions
+as text/number fields, toggles, or choices in the producer details view.
+Producers return rename or tag-update operations; they do not apply filesystem
+changes directly. Tagwise fills in each operation's `producedBy` field
+automatically.
+
+```ts
+import { defineProducer } from "../producer-types";
+
+const producer = defineProducer({
+  name: "combine-artists",
+  title: "Combine Artist Tags",
+  version: "1.0.0",
+  args: [
+    {
+      key: "separator",
+      title: "Join character",
+      description: "Text inserted between artist values.",
+      type: "string",
+      required: true,
+    },
+  ],
+  async produce(library, args) {
+    const separator = args.separator;
+    // Use separator when combining values.
+    return [];
+  },
+});
+
+export default producer;
+```
+
+`defineProducer` infers the argument keys and value types from `args`, so
+`produce` gets autocomplete for configured arguments. Values marked `required`
+are validated by Tagwise before the producer runs; a supplied `default` makes
+the value available without requiring input.
 
 The `library` passed to a producer is a read-only snapshot of the current fake
 library. Producers run in the selected order, and later producers see the

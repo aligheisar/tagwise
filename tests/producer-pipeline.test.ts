@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { ProducerRepository } from "../src/repositories/producer.repository";
 import { runProducerPipeline } from "../src/services/producer-pipeline.service";
+import { ProducerService } from "../src/services/producer.service";
 import type { Library } from "../src/types/library";
 import type { Producer } from "../src/types/producer";
 
@@ -29,7 +31,6 @@ describe("runProducerPipeline", () => {
           newPath: "/music/renamed.mp3",
           oldPath: "/music/track.mp3",
           type: "rename",
-          producedBy: "renamer",
         },
       ],
     };
@@ -49,7 +50,6 @@ describe("runProducerPipeline", () => {
             path: "/music/renamed.mp3",
             tags: { album: "Projected", year: 2024 },
             type: "tag-update",
-            producedBy: "tagger",
           },
         ];
       },
@@ -74,10 +74,100 @@ describe("runProducerPipeline", () => {
       "rename",
       "tag-update",
     ]);
+    expect(result.operations.map(({ producedBy }) => producedBy)).toEqual([
+      "renamer",
+      "tagger",
+    ]);
     expect(result.operations[1]?.metadata).toMatchObject({
       filePath: "/music/track.mp3",
       previousTags: { album: undefined, year: 2020 },
       producerName: "tagger",
+    });
+  });
+
+  test("assigns producer identity in the single-producer service too", async () => {
+    const repository = new ProducerRepository();
+    repository.register({
+      name: "direct-producer",
+      title: "Direct Producer",
+      version: "1.0.0",
+      produce: async () => [
+        {
+          id: "rename-track",
+          newPath: "/music/renamed.mp3",
+          oldPath: "/music/track.mp3",
+          type: "rename",
+        },
+      ],
+    });
+    const service = new ProducerService(repository);
+
+    const operations = await service.run("direct-producer", {
+      cachedAt: new Date(),
+      items: [],
+      root: "/music",
+    } as Library);
+
+    expect(operations[0]?.producedBy).toBe("direct-producer");
+  });
+
+  test("passes configured arguments to each producer and merges its defaults", async () => {
+    const library = {
+      cachedAt: new Date(),
+      items: [],
+      root: "/music",
+    } as Library;
+    let receivedArguments:
+      | Record<string, string | number | boolean>
+      | undefined;
+    const producer: Producer = {
+      args: [
+        {
+          default: ", ",
+          key: "separator",
+          title: "Join character",
+          type: "string",
+        },
+        {
+          default: 10,
+          key: "limit",
+          title: "Limit",
+          type: "number",
+        },
+        {
+          key: "requiredCount",
+          required: true,
+          title: "Required count",
+          type: "number",
+        },
+        {
+          key: "optionalText",
+          title: "Optional text",
+          type: "string",
+        },
+        {
+          key: "optionalCount",
+          title: "Optional count",
+          type: "number",
+        },
+      ],
+      name: "combine",
+      title: "Combine",
+      version: "1.0.0",
+      produce: async (_snapshot, args) => {
+        receivedArguments = args;
+        return [];
+      },
+    };
+
+    await runProducerPipeline(library, [producer], {
+      combine: { separator: " / " },
+    });
+
+    expect(receivedArguments).toEqual({
+      limit: 10,
+      requiredCount: 0,
+      separator: " / ",
     });
   });
 

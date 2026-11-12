@@ -12,6 +12,7 @@ import {
   scanLibrary,
   selectCachedLibrary,
 } from "#/services/tui-workflow.service";
+import type { ProducerArguments } from "#/types/producer";
 import { logger } from "#/utils/logger";
 import { appContext } from "@/context/app-context";
 import { useOperations } from "@/hooks/use-operations";
@@ -124,11 +125,18 @@ const AppProvider = ({
   );
 
   const handleProducerConfirm = useCallback(
-    async (selectedProducers: string[]) => {
+    async (
+      selectedProducers: string[],
+      producerArguments: Record<string, ProducerArguments>,
+    ) => {
       if (!currentRoot) return;
 
       try {
-        const result = await generateOperations(currentRoot, selectedProducers);
+        const result = await generateOperations(
+          currentRoot,
+          selectedProducers,
+          producerArguments,
+        );
 
         if (!result.ok) {
           toast(result.error);
