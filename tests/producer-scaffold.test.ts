@@ -68,6 +68,49 @@ const legacyProducerTypeSource = `export type Producer = {
   produce(library: ProducerLibrary): Promise<ProducerOperation[]>;
 };`;
 
+/** Type-checks migrated shared declarations through their public exports. */
+function expectTypesToCompile(typesSource: string): void {
+  const filePath = "/virtual/producer-types.ts";
+  const argumentTypesStart = typesSource.indexOf(
+    "export type ProducerArgument",
+  );
+  expect(argumentTypesStart).toBeGreaterThanOrEqual(0);
+  const compileSource = `type ProducerLibrary = unknown;
+type ProducerOperation = unknown;
+
+${typesSource.slice(argumentTypesStart)}`;
+  const files = new Map([[filePath, compileSource]]);
+  const options: ts.CompilerOptions = {
+    strict: true,
+    noEmit: true,
+    target: ts.ScriptTarget.ESNext,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    types: [],
+    skipLibCheck: true,
+  };
+  const host = ts.createCompilerHost(options);
+  const originalGetSourceFile = host.getSourceFile.bind(host);
+  const originalFileExists = host.fileExists.bind(host);
+  const originalReadFile = host.readFile.bind(host);
+  host.getCurrentDirectory = () => "/virtual";
+  host.fileExists = (fileName) =>
+    files.has(fileName) || originalFileExists(fileName);
+  host.readFile = (fileName) =>
+    files.get(fileName) ?? originalReadFile(fileName);
+  host.getSourceFile = (fileName, languageVersion, onError, createNew) =>
+    files.has(fileName)
+      ? ts.createSourceFile(
+          fileName,
+          files.get(fileName) ?? "",
+          languageVersion,
+          true,
+        )
+      : originalGetSourceFile(fileName, languageVersion, onError, createNew);
+  const program = ts.createProgram([filePath], options, host);
+  expect(ts.getPreEmitDiagnostics(program)).toEqual([]);
+}
+
 afterEach(async () => {
   if (temporaryDirectory) {
     await rm(temporaryDirectory, { force: true, recursive: true });
@@ -229,6 +272,7 @@ describe("producer scaffolding", () => {
     expect(migratedTypes).not.toContain(
       "produce(library: ProducerLibrary): Promise<ProducerOperation[]>;",
     );
+    expectTypesToCompile(migratedTypes);
   });
 
   test("does not scaffold when customized types omit defineProducer", async () => {
@@ -287,6 +331,7 @@ describe("producer scaffolding", () => {
     expect(migratedTypes).toContain("args: ProducerArguments<Arguments>");
     expect(migratedTypes).toContain("export function defineProducer");
     expect(migratedTypes).not.toContain(previousProducerTypeSource);
+    expectTypesToCompile(migratedTypes);
   });
 
   test("infers producer argument keys and values from definitions", () => {

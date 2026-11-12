@@ -383,6 +383,7 @@ function migrateProducerTypesSource(source: string): string | undefined {
       producerArgumentTypeSource,
       producerArgumentValueTypeSource,
       producerArgumentsTypeSource,
+      validProducerArgumentsTypeSource,
       producerTypeSource,
       defineProducerFunctionSource,
     ].join("\n\n");
@@ -405,7 +406,7 @@ function migrateProducerTypesSource(source: string): string | undefined {
     [previousProducerArgumentsTypeSource, producerArgumentsTypeSource],
     [
       previousProducerTypeSource,
-      `${producerTypeSource}\n\n${defineProducerFunctionSource}`,
+      `${validProducerArgumentsTypeSource}\n\n${producerTypeSource}\n\n${defineProducerFunctionSource}`,
     ],
   ];
   for (const [previous, current] of previousTypes) {

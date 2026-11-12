@@ -5,8 +5,10 @@ import type { Operation } from "#/types/operation";
 import type { Producer, ProducerArguments } from "#/types/producer";
 
 class ProducerService {
+  /** Creates a service backed by the producer repository. */
   constructor(private readonly producerRepository: ProducerRepository) {}
 
+  /** Runs a producer with its declared defaults and adds producer metadata. */
   async run(
     producerName: string,
     library: Library,
@@ -27,6 +29,7 @@ class ProducerService {
     }));
   }
 
+  /** Returns all registered producers. */
   getAll(): Producer[] {
     return this.producerRepository.getAll();
   }

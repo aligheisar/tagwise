@@ -4,22 +4,24 @@ import type {
   ProducerArguments,
 } from "#/types/producer";
 
+/** Resolves argument defaults and placeholders for required producer arguments. */
 function getDefaultProducerArguments(
   definitions: readonly ProducerArgument[] = [],
 ): ProducerArguments {
   return Object.fromEntries(
-    definitions.map((argument) => {
+    definitions.flatMap((argument) => {
       if (argument.default !== undefined) {
-        return [argument.key, argument.default];
+        return [[argument.key, argument.default]];
       }
-      if (argument.type === "number") {
-        return [argument.key, 0];
+      if (argument.required) {
+        return [[argument.key, argument.type === "number" ? 0 : ""]];
       }
-      return [argument.key, ""];
+      return [];
     }),
   );
 }
 
+/** Returns the defaults declared by a producer, including required placeholders. */
 function getProducerArgumentDefaults(producer: Producer): ProducerArguments {
   return getDefaultProducerArguments(producer.args);
 }

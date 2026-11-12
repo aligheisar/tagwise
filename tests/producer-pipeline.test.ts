@@ -134,6 +134,22 @@ describe("runProducerPipeline", () => {
           title: "Limit",
           type: "number",
         },
+        {
+          key: "requiredCount",
+          required: true,
+          title: "Required count",
+          type: "number",
+        },
+        {
+          key: "optionalText",
+          title: "Optional text",
+          type: "string",
+        },
+        {
+          key: "optionalCount",
+          title: "Optional count",
+          type: "number",
+        },
       ],
       name: "combine",
       title: "Combine",
@@ -148,7 +164,11 @@ describe("runProducerPipeline", () => {
       combine: { separator: " / " },
     });
 
-    expect(receivedArguments).toEqual({ limit: 10, separator: " / " });
+    expect(receivedArguments).toEqual({
+      limit: 10,
+      requiredCount: 0,
+      separator: " / ",
+    });
   });
 
   test("records each producer's previous tag values and omits no-op files", async () => {

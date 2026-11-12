@@ -28,13 +28,18 @@ function resolveProducerArgumentValues(
   const resolved: Record<string, string | number | boolean> = {};
   for (const argument of producer.args ?? []) {
     const inputValue = values[argument.key];
-    const value =
-      inputValue ??
-      (typeof argument.default === "boolean"
+    const defaultValue =
+      typeof argument.default === "boolean"
         ? argument.default
         : argument.default === undefined
           ? undefined
-          : String(argument.default));
+          : String(argument.default);
+    const isBlankNumber =
+      argument.type === "number" &&
+      typeof inputValue === "string" &&
+      inputValue.trim() === "";
+    const value =
+      inputValue == null || isBlankNumber ? defaultValue : inputValue;
     const isRequired =
       argument.required === true && argument.default === undefined;
     if (

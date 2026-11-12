@@ -122,4 +122,23 @@ describe("producer argument form values", () => {
       }),
     ).toThrow('Choose a valid option for "Mode"');
   });
+
+  test("uses a number default for blank input and omits blank optional numbers", () => {
+    expect(
+      resolveProducerArgumentValues(producer, {
+        count: " \t ",
+        requiredText: "present",
+      }),
+    ).toMatchObject({ count: 5 });
+
+    const optionalNumberProducer: Producer = {
+      ...producer,
+      args: [{ key: "optionalCount", title: "Optional count", type: "number" }],
+    };
+    expect(
+      resolveProducerArgumentValues(optionalNumberProducer, {
+        optionalCount: " \t ",
+      }),
+    ).toEqual({});
+  });
 });
