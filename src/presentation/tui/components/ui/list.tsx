@@ -1,7 +1,8 @@
 import { useKeyboard } from "@opentui/react";
-import { useMemo, useState } from "react";
-
+import { useCallback, useMemo, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useVimJump } from "@/hooks/use-vim-jump";
+import { getListWindow } from "@/lib/list-window";
 
 export interface ListItem {
   color?: string;
@@ -36,12 +37,6 @@ export const List = ({
   const [filter, setFilter] = useState("");
   const activeIndex = controlledActiveIndex ?? internalActiveIndex;
 
-  const setActiveIndex = (update: (index: number) => number) => {
-    const next = update(activeIndex);
-    if (controlledActiveIndex === undefined) setInternalActiveIndex(next);
-    onActiveIndexChange?.(next);
-  };
-
   const filtered = useMemo(() => {
     if (!filter) {
       return items;
@@ -50,8 +45,22 @@ export const List = ({
     return items.filter((item) => item.label.toLowerCase().includes(q));
   }, [items, filter]);
 
+  const setActiveIndex = useCallback(
+    (update: (index: number) => number) => {
+      const next = update(activeIndex);
+      if (controlledActiveIndex === undefined) setInternalActiveIndex(next);
+      onActiveIndexChange?.(next);
+    },
+    [activeIndex, controlledActiveIndex, onActiveIndexChange],
+  );
+  const handleVimJump = useVimJump({
+    onJump: (index) => setActiveIndex(() => index),
+    totalCount: filtered.length,
+  });
+
   useKeyboard((key) => {
     if (!focused) return;
+    if (!filterable && handleVimJump(key)) return;
     if (key.name === "up" || key.name === "k") {
       setActiveIndex((index) => Math.max(0, index - 1));
     } else if (key.name === "down" || key.name === "j") {
@@ -77,7 +86,11 @@ export const List = ({
     }
   });
 
-  const visible = filtered.slice(0, height);
+  const visibleWindow = getListWindow(filtered.length, height, activeIndex);
+  const visible = filtered.slice(
+    visibleWindow.startIndex,
+    visibleWindow.endIndex,
+  );
 
   return (
     <box flexDirection="column">
@@ -95,7 +108,7 @@ export const List = ({
         </box>
       ) : null}
       {visible.map((item, idx) => {
-        const isActive = idx === activeIndex;
+        const isActive = visibleWindow.startIndex + idx === activeIndex;
         const labelEl = isActive ? (
           <text fg={item.color ?? theme.colors.primary}>
             <b>{item.label}</b>
@@ -121,10 +134,10 @@ export const List = ({
           </box>
         );
       })}
-      {filtered.length > height ? (
+      {visibleWindow.endIndex < filtered.length ? (
         <text
           fg={theme.colors.muted}
-        >{`${filtered.length - height} more…`}</text>
+        >{`${filtered.length - visibleWindow.endIndex} more…`}</text>
       ) : null}
     </box>
   );

@@ -31,6 +31,7 @@ const SCREEN_SHORTCUTS: Record<Screen["type"], HelpShortcut[]> = {
   ],
   "producer-select": [
     { description: "Move selection", key: "j / k" },
+    { description: "Jump to first / last item", key: "gg / G" },
     { description: "Reorder producers", key: "Shift+J/K" },
     { description: "Return to welcome", key: "Esc" },
     { description: "Toggle producer", key: "Space" },
@@ -40,6 +41,7 @@ const SCREEN_SHORTCUTS: Record<Screen["type"], HelpShortcut[]> = {
   ],
   review: [
     { description: "Move through proposals", key: "j / k" },
+    { description: "Jump to first / last item", key: "gg / G" },
     { description: "Move proposal in apply order", key: "Shift+J/K" },
     { description: "Collapse / expand folder", key: "h / l" },
     { description: "Accept or reject proposal", key: "Space" },
@@ -54,6 +56,7 @@ const SCREEN_SHORTCUTS: Record<Screen["type"], HelpShortcut[]> = {
   welcome: [
     { description: "Focus folder input", key: "Tab" },
     { description: "Browse cached libraries", key: "j / k" },
+    { description: "Jump to first / last library", key: "gg / G" },
     { description: "Scan or open selected library", key: "Enter" },
   ],
 };

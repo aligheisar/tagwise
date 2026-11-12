@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
 import { logger } from "#/utils/logger";
 import { ScreenInfo } from "@/components/screen-info";
+import { ShortcutsBar } from "@/components/shortcuts-bar";
 import { useApp } from "@/hooks/use-app";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -102,21 +103,23 @@ export function ApplyScreen() {
         </box>
       </box>
 
-      <box flexDirection="column" padding={1}>
-        {!applying && !result && (
-          <text>
-            <span fg={colors.muted}>
-              {"Enter: apply | Esc: back to review"}
-            </span>
-          </text>
-        )}
-
-        {result && (
-          <text>
-            <span fg={colors.muted}>{"Press any key to exit"}</span>
-          </text>
-        )}
-      </box>
+      {!applying && !result && (
+        <ShortcutsBar
+          data={{
+            shortcuts: [
+              { description: "apply", key: "Enter" },
+              { description: "back to review", key: "Esc" },
+            ],
+          }}
+        />
+      )}
+      {result && (
+        <ShortcutsBar
+          data={{
+            shortcuts: [{ description: "exit", key: "Any key" }],
+          }}
+        />
+      )}
     </box>
   );
 }

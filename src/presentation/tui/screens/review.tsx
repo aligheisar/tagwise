@@ -5,14 +5,14 @@ import type { FlatNode } from "#/lib/tree/tree-model";
 import { computeVisibleNodes } from "#/lib/tree/tree-model";
 import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
 import { DetailModal } from "@/components/detail-modal";
+import { ShortcutsBar } from "@/components/shortcuts-bar";
 import { StatusBar } from "@/components/status-bar";
 import { TreeView } from "@/components/tree-view";
 import { useApp } from "@/hooks/use-app";
-import { useTheme } from "@/hooks/use-theme";
+import { useVimJump } from "@/hooks/use-vim-jump";
 import { useVimNav } from "@/hooks/use-vim-nav";
 
 export function ReviewScreen() {
-  const { colors } = useTheme();
   const renderer = useRenderer();
   const {
     operations: {
@@ -45,6 +45,10 @@ export function ReviewScreen() {
     useVimNav({
       totalCount: visibleNodes.length,
     });
+  const handleVimJump = useVimJump({
+    onJump: setCursorIndex,
+    totalCount: visibleNodes.length,
+  });
   const pendingCursorId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -179,6 +183,7 @@ export function ReviewScreen() {
       }
       return;
     }
+    if (handleVimJump(key)) return;
 
     switch (key.name) {
       case "j":
@@ -235,33 +240,21 @@ export function ReviewScreen() {
 
   return (
     <box flexDirection="column" flexGrow={1}>
-      <box
-        backgroundColor={colors.background}
-        flexDirection="row"
-        justifyContent="space-between"
-        paddingX={1}
-      >
-        <text>
-          <span fg={colors.accent}>[</span>
-          <span fg={colors.foreground}>j/k</span>
-          <span fg={colors.muted}>:nav </span>
-          <span fg={colors.foreground}>J/K</span>
-          <span fg={colors.muted}>:move </span>
-          <span fg={colors.foreground}>h/l</span>
-          <span fg={colors.muted}>:fold </span>
-          <span fg={colors.foreground}>Space</span>
-          <span fg={colors.muted}>:toggle </span>
-          <span fg={colors.foreground}>i</span>
-          <span fg={colors.muted}>:detail </span>
-          <span fg={colors.foreground}>a/r</span>
-          <span fg={colors.muted}>:folder </span>
-          <span fg={colors.foreground}>A/R</span>
-          <span fg={colors.muted}>:all </span>
-          <span fg={colors.foreground}>Esc</span>
-          <span fg={colors.muted}>:producers </span>
-          <span fg={colors.accent}>]</span>
-        </text>
-      </box>
+      <ShortcutsBar
+        data={{
+          shortcuts: [
+            { description: "navigate", key: "j/k" },
+            { description: "first/last", key: "gg/G" },
+            { description: "move", key: "J/K" },
+            { description: "fold", key: "h/l" },
+            { description: "toggle", key: "Space" },
+            { description: "detail", key: "i" },
+            { description: "folder", key: "a/r" },
+            { description: "all", key: "A/R" },
+            { description: "producers", key: "Esc" },
+          ],
+        }}
+      />
 
       <box flexDirection="column" flexGrow={1}>
         <TreeView
@@ -273,7 +266,34 @@ export function ReviewScreen() {
         />
       </box>
 
-      <StatusBar mode="review" stats={stats} />
+      <StatusBar
+        data={{
+          help: "? help",
+          items: [
+            {
+              id: "accepted",
+              label: "accepted",
+              value: stats.accepted,
+              variant: "success",
+            },
+            {
+              id: "rejected",
+              label: "rejected",
+              value: stats.rejected,
+              variant: "error",
+            },
+            {
+              id: "modified",
+              label: "modified",
+              separatorAfter: "/",
+              value: stats.modified,
+              variant: "warning",
+            },
+            { id: "total", label: "total", value: stats.total },
+          ],
+          mode: "review",
+        }}
+      />
 
       {selectedId && currentNode?.type === "leaf" && (
         <DetailModal
