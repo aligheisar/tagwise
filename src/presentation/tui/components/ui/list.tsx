@@ -1,7 +1,7 @@
 import { useKeyboard } from "@opentui/react";
-import { useMemo, useState } from "react";
-
+import { useCallback, useMemo, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useVimJump } from "@/hooks/use-vim-jump";
 
 export interface ListItem {
   color?: string;
@@ -36,12 +36,6 @@ export const List = ({
   const [filter, setFilter] = useState("");
   const activeIndex = controlledActiveIndex ?? internalActiveIndex;
 
-  const setActiveIndex = (update: (index: number) => number) => {
-    const next = update(activeIndex);
-    if (controlledActiveIndex === undefined) setInternalActiveIndex(next);
-    onActiveIndexChange?.(next);
-  };
-
   const filtered = useMemo(() => {
     if (!filter) {
       return items;
@@ -50,8 +44,22 @@ export const List = ({
     return items.filter((item) => item.label.toLowerCase().includes(q));
   }, [items, filter]);
 
+  const setActiveIndex = useCallback(
+    (update: (index: number) => number) => {
+      const next = update(activeIndex);
+      if (controlledActiveIndex === undefined) setInternalActiveIndex(next);
+      onActiveIndexChange?.(next);
+    },
+    [activeIndex, controlledActiveIndex, onActiveIndexChange],
+  );
+  const handleVimJump = useVimJump({
+    onJump: (index) => setActiveIndex(() => index),
+    totalCount: filtered.length,
+  });
+
   useKeyboard((key) => {
     if (!focused) return;
+    if (!filterable && handleVimJump(key)) return;
     if (key.name === "up" || key.name === "k") {
       setActiveIndex((index) => Math.max(0, index - 1));
     } else if (key.name === "down" || key.name === "j") {

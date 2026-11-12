@@ -3,12 +3,11 @@ import { useEffect, useState } from "react";
 import { CachedLibraries } from "@/components/cached-libraries";
 import { ScanFolderInput } from "@/components/scan-folder-input";
 import { ScreenInfo } from "@/components/screen-info";
+import { ShortcutsBar } from "@/components/shortcuts-bar";
 import { useApp } from "@/hooks/use-app";
 import { useLibraries } from "@/hooks/use-libraries";
-import { useTheme } from "@/hooks/use-theme";
 
 export function WelcomeScreen() {
-  const { colors } = useTheme();
   const renderer = useRenderer();
   const { handleSelectCached, helpOpen, setHelpShortcutEnabled } = useApp();
   const { libraries } = useLibraries();
@@ -45,6 +44,7 @@ export function WelcomeScreen() {
 
         <CachedLibraries
           focusMode={focusMode}
+          keyboardEnabled={!helpOpen}
           onActiveIndexChange={setSelectedIndex}
           onSelect={handleSelectCached}
           selectedIndex={selectedIndex}
@@ -57,13 +57,24 @@ export function WelcomeScreen() {
         />
       </box>
 
-      <box paddingX={1}>
-        <text fg={colors.muted}>
-          {focusMode === "input"
-            ? "Enter: scan | ↑↓: suggestions | Esc: back"
-            : "Tab: input | Enter: select | ↑↓/jk: navigate | q: quit"}
-        </text>
-      </box>
+      <ShortcutsBar
+        data={{
+          shortcuts:
+            focusMode === "input"
+              ? [
+                  { description: "scan", key: "Enter" },
+                  { description: "suggestions", key: "↑↓" },
+                  { description: "back", key: "Esc" },
+                ]
+              : [
+                  { description: "input", key: "Tab" },
+                  { description: "select", key: "Enter" },
+                  { description: "navigate", key: "↑↓/j/k" },
+                  { description: "first/last", key: "gg/G" },
+                  { description: "quit", key: "q" },
+                ],
+        }}
+      />
     </box>
   );
 }

@@ -1,15 +1,24 @@
+import { Fragment } from "react";
+import type { StatusVariant } from "@/components/ui/status-message";
 import { StatusMessage } from "@/components/ui/status-message";
-import type { UseOperationsReturn } from "@/hooks/use-operations";
 import { useTheme } from "@/hooks/use-theme";
 
-type StatusBarProps = {
-  stats: UseOperationsReturn["stats"];
-  mode: string;
+type StatusBarItem = {
+  id: string;
+  label: string;
+  separatorAfter?: string;
+  value: string | number;
+  variant?: StatusVariant;
 };
 
-export function StatusBar({ stats, mode }: StatusBarProps) {
+type StatusBarData = {
+  help?: string;
+  items: StatusBarItem[];
+  mode?: string;
+};
+
+export function StatusBar({ data }: { data: StatusBarData }) {
   const { colors } = useTheme();
-  const theme = useTheme();
   return (
     <box
       backgroundColor={colors.background}
@@ -18,24 +27,29 @@ export function StatusBar({ stats, mode }: StatusBarProps) {
       paddingX={1}
     >
       <box flexDirection="row" gap={1}>
-        <StatusMessage variant="success">
-          <text>{`${stats.accepted} accepted`}</text>
-        </StatusMessage>
-        <text fg={theme.colors.border}>|</text>
-        <StatusMessage variant="error">
-          <text>{`${stats.rejected} rejected`}</text>
-        </StatusMessage>
-        <text fg={theme.colors.border}>|</text>
-        <StatusMessage variant="warning">
-          <text>{`${stats.modified} modified`}</text>
-        </StatusMessage>
-        <text fg={theme.colors.border}>/</text>
-        <text fg={colors.foreground}>{`${stats.total} total`}</text>
+        {data.items.map((item, index) => (
+          <Fragment key={item.id}>
+            <box flexDirection="row" gap={1}>
+              {item.variant ? (
+                <StatusMessage variant={item.variant}>
+                  <text>{`${item.value} ${item.label}`}</text>
+                </StatusMessage>
+              ) : (
+                <text
+                  fg={colors.foreground}
+                >{`${item.value} ${item.label}`}</text>
+              )}
+            </box>
+            {index < data.items.length - 1 && (
+              <text fg={colors.border}>{item.separatorAfter ?? "|"}</text>
+            )}
+          </Fragment>
+        ))}
       </box>
       <text>
-        <span fg={colors.muted}>{mode}</span>
-        <span fg={colors.accent}> | </span>
-        <span fg={colors.muted}>? help</span>
+        {data.mode && <span fg={colors.muted}>{data.mode}</span>}
+        {data.mode && data.help && <span fg={colors.accent}> | </span>}
+        {data.help && <span fg={colors.muted}>{data.help}</span>}
       </text>
     </box>
   );

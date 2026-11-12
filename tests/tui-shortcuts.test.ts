@@ -3,6 +3,7 @@ import {
   getHelpShortcuts,
   isHelpToggleKey,
 } from "../src/presentation/tui/lib/shortcuts";
+import { getVimJumpAction } from "../src/presentation/tui/lib/vim-navigation";
 
 describe("TUI help shortcuts", () => {
   test("provides help for every screen", () => {
@@ -22,6 +23,18 @@ describe("TUI help shortcuts", () => {
       key: "Shift+J/K",
       description: "Move proposal in apply order",
     });
+    expect(getHelpShortcuts("review")).toContainEqual({
+      key: "gg / G",
+      description: "Jump to first / last item",
+    });
+  });
+
+  test("maps gg to the first item and shifted g to the last item", () => {
+    expect(getVimJumpAction({ name: "g" }, false)).toBe("pending");
+    expect(getVimJumpAction({ name: "g" }, true)).toBe("first");
+    expect(getVimJumpAction({ name: "g", shift: true }, false)).toBe("last");
+    expect(getVimJumpAction({ name: "G" }, false)).toBe("last");
+    expect(getVimJumpAction({ name: "j" }, true)).toBeNull();
   });
 
   test("recognizes OpenTUI's shifted slash key for help", () => {

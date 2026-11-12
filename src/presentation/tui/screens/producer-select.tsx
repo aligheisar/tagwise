@@ -6,9 +6,11 @@ import type {
 } from "#/types/producer";
 import { ProducerDetailModal } from "@/components/producer-detail-modal";
 import { ScreenInfo } from "@/components/screen-info";
+import { ShortcutsBar } from "@/components/shortcuts-bar";
 import { useApp } from "@/hooks/use-app";
 import { useProducers } from "@/hooks/use-producers";
 import { useTheme } from "@/hooks/use-theme";
+import { useVimJump } from "@/hooks/use-vim-jump";
 import {
   resolveProducerArgumentValues,
   toProducerArgumentInputValues,
@@ -50,6 +52,10 @@ export function ProducerSelect() {
   const detailProducer = detailProducerName
     ? producers.find((producer) => producer.name === detailProducerName)
     : undefined;
+  const handleVimJump = useVimJump({
+    onJump: setCursorIndex,
+    totalCount: orderedProducers.length,
+  });
 
   const moveItem = (direction: -1 | 1) => {
     setOrder((prev) => {
@@ -92,6 +98,7 @@ export function ProducerSelect() {
 
   useKeyboard((key) => {
     if (helpOpen || detailProducerName) return;
+    if (handleVimJump(key)) return;
 
     switch (key.name) {
       case "escape":
@@ -193,15 +200,20 @@ export function ProducerSelect() {
           })}
         </box>
       </box>
-      <box paddingX={1}>
-        <text>
-          <span fg={colors.muted}>
-            {
-              "Esc: back | Space: toggle | i: details/arguments | a: all | n: none | J/K: reorder | Enter: confirm"
-            }
-          </span>
-        </text>
-      </box>
+      <ShortcutsBar
+        data={{
+          shortcuts: [
+            { description: "back", key: "Esc" },
+            { description: "navigate", key: "j/k" },
+            { description: "first/last", key: "gg/G" },
+            { description: "toggle", key: "Space" },
+            { description: "details/arguments", key: "i" },
+            { description: "all/none", key: "a/n" },
+            { description: "reorder", key: "J/K" },
+            { description: "confirm", key: "Enter" },
+          ],
+        }}
+      />
       {detailProducer && (
         <ProducerDetailModal
           error={detailError}

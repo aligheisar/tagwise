@@ -4,11 +4,13 @@ import { useTheme } from "@/hooks/use-theme";
 
 const CachedLibraries = ({
   focusMode,
+  keyboardEnabled,
   selectedIndex,
   onActiveIndexChange,
   onSelect,
 }: {
   focusMode: "cached" | "input";
+  keyboardEnabled: boolean;
   selectedIndex: number;
   onActiveIndexChange: (index: number) => void;
   onSelect: (root: string) => void;
@@ -25,7 +27,7 @@ const CachedLibraries = ({
       {libraries.length > 0 ? (
         <List
           activeIndex={selectedIndex}
-          focused={focusMode === "cached"}
+          focused={focusMode === "cached" && keyboardEnabled}
           items={libraries.map((library) => ({
             description: `${library.itemCount} files`,
             key: library.root,
