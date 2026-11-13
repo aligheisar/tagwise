@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import { useTheme } from "@/hooks/use-theme";
-import "opentui-spinner/react";
 
 export type StatusVariant =
   | "success"
@@ -57,7 +57,7 @@ export const StatusMessage = ({
   return (
     <box flexDirection="row" gap={1}>
       {variant === "loading" ? (
-        <spinner color={variantColor} name="dots" />
+        <Spinner color={variantColor} name="dots" />
       ) : (
         <text fg={variantColor}>
           {icon ?? ICONS[variant as Exclude<StatusVariant, "loading">]}
