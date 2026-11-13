@@ -1,6 +1,6 @@
-import "opentui-spinner/react";
 import { useKeyboard } from "@opentui/react";
 import { useLibraries } from "#/presentation/tui/hooks/use-libraries";
+import { Spinner } from "@/components/ui/spinner";
 import { useApp } from "@/hooks/use-app";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -28,7 +28,7 @@ export function ScanningScreen() {
         <text fg={colors.warning}>{folder ?? "/rum/media/ali/toshiba"}</text>
         <box flexDirection="row" gap={1}>
           <text fg={colors.success}>Scanning</text>
-          <spinner color={colors.success} name="binary" />
+          <Spinner color={colors.success} name="binary" />
         </box>
       </box>
     </box>
