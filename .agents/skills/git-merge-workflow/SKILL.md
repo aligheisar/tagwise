@@ -53,6 +53,7 @@ Keep branch names descriptive but concise (lowercase, hyphens as separators).
 1. Create the GitHub issue first (if it doesn't exist):
    - Gather issue details from the user
    - Use appropriate issue creation tools
+   - **Always use the `aligheisar` account when creating issues via `gh issue create`**
 2. Reference the issue in subsequent steps
 
 **If it is NOT an issue fix:**
@@ -79,39 +80,27 @@ Follow the appropriate implementation pattern based on the task:
 
 When ready to submit, use the GitHub CLI to create the PR. **Always wrap branch names in single quotes** to prevent shell interpolation issues (e.g., `'feat(cli)/fix-bug'`).
 
+**Important:** All issues and pull requests must be created using the `aligheisar` account. If not already authenticated as `aligheisar`, switch accounts before proceeding.
+
 ```bash
-# Save current account so you can switch back later
+# Ensure we're using the aligheisar account
+CURRENT_USER=$(gh api user --jq '.login')
+if [ "$CURRENT_USER" != "aligheisar" ]; then
+  gh auth switch -u aligheisar
+fi
+
+# Save current account so you can switch back later (if needed)
 CURRENT_ACCOUNT=$(gh api user --jq '.login')
 echo "Current account: $CURRENT_ACCOUNT"
 
-# Try to push and create PR first
 GIT_BRANCH='your-branch-name'
 gh pr create --title '<descriptive title>' --body '<description>' --base '<base-branch>' --head "$GIT_BRANCH"
-
-# Only if you get an auth/unauthorized error, switch to the correct account
-# Check current user matches expected account
-EXPECTED_USER='aligheisar'
-CURRENT_USER=$(gh api user --jq '.login')
-
-if [ "$CURRENT_USER" != "$EXPECTED_USER" ]; then
-  # Switch to the correct account
-  gh auth switch -u aligheisar
-  
-  # Retry the operation
-  git push origin "$GIT_BRANCH"
-  gh pr create --title '<descriptive title>' --body '<description>' --base '<base-branch>' --head "$GIT_BRANCH"
-  
-  # Switch back to original account after work is done
-  gh auth switch -u "$CURRENT_ACCOUNT"
-fi
 ```
 
 **Multi-account handling**:
-- Save your current account with `CURRENT_ACCOUNT=$(gh api user --jq '.login')` before any operations.
-- Attempt the PR creation first — only switch accounts if you encounter an auth/unauthorized error.
-- When switching is required, verify the current user doesn't match 'aligheisar', then switch with `gh auth switch -u aligheisar`.
-- After successfully completing the PR creation, switch back to your original account with `gh auth switch -u <original-account>`.
-- Always wrap branch names in single quotes when writing them (e.g., `'feat(cli)/my-feature'`.
+- Always ensure operations are performed under the `aligheisar` account.
+- Check current user with `gh api user --jq '.login'` and switch to `aligheisar` if needed using `gh auth switch -u aligheisar`.
+- Always wrap branch names in single quotes when writing them (e.g., `'feat(cli)/my-feature'`).
 
 ### 6. Auto-Triggered Review & Merge (No Explicit User Request)
 
@@ -155,3 +144,4 @@ User asks to apply/review a change to merge
 This skill works in conjunction with:
 - **gh CLI** — for creating pull requests
 - Standard git commands — for branch management and version control
+Always operate under the `aligheisar` account. Before any git/gh operations, verify authentication with `gh api user --jq '.login'` and switch to `aligheisar` if needed using `gh auth switch -u aligheisar
