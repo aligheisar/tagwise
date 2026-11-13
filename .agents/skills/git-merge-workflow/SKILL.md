@@ -4,7 +4,7 @@ description: >
   Use this skill when applying or reviewing code changes that need to be merged.
   Handles the full workflow: pulling main, creating a working branch, handling
   issue-based fixes (including issue creation), implementing the change, and
-  creating a pull request via the create-pull-request skill.
+  creating a pull request via GitHub CLI.
 license: MIT
 ---
 
@@ -77,47 +77,41 @@ Follow the appropriate implementation pattern based on the task:
 
 ### 5. Create Pull Request
 
-When ready to submit, use the GitHub CLI to create the PR:
+When ready to submit, use the GitHub CLI to create the PR. **Always wrap branch names in single quotes** to prevent shell interpolation issues (e.g., `'feat(cli)/fix-bug'`).
 
 ```bash
-# Identify the correct account from the repository's remote owner
-REMOTE_OWNER=$(git remote get-url origin | grep -oP '(?<=/)[^/]+' | head -1)
-echo "Repo owner: $REMOTE_OWNER"
-
 # Save current account so you can switch back later
 CURRENT_ACCOUNT=$(gh api user --jq '.login')
 echo "Current account: $CURRENT_ACCOUNT"
 
-# Check current account matches repo owner
-ACTUAL_ACCOUNT=$(gh auth status --json login --jq '.[0].login' 2>/dev/null || echo "")
-if [ "$ACTUAL_ACCOUNT" != "$REMOTE_OWNER" ]; then
-  # Switch to the correct account for this repo
-  gh auth switch -h github.com
-fi
+# Try to push and create PR first
+GIT_BRANCH='your-branch-name'
+gh pr create --title '<descriptive title>' --body '<description>' --base '<base-branch>' --head "$GIT_BRANCH"
 
-# Push the working branch to remote (if not already pushed)
-git push origin <branch-name>
+# Only if you get an auth/unauthorized error, switch to the correct account
+# Check current user matches expected account
+EXPECTED_USER='aligheisar'
+CURRENT_USER=$(gh api user --jq '.login')
 
-# Create the PR
-gh pr create --title "<descriptive title>" --body "<description>" --base <base-branch> --head <branch-name>
-
-# If unauthorized error occurs, verify account matches repo owner:
-# REMOTE_OWNER=$(git remote get-url origin | grep -oP '(?<=/)[^/]+')
-# CURRENT_ACCOUNT=$(gh auth status --json login --jq '.[0].login')
-# gh auth switch -h github.com
-
-# Switch back to original account if it was different
-if [ "$CURRENT_ACCOUNT" != "$REMOTE_OWNER" ]; then
-  gh auth switch -h github.com
+if [ "$CURRENT_USER" != "$EXPECTED_USER" ]; then
+  # Switch to the correct account
+  gh auth switch -u aligheisar
+  
+  # Retry the operation
+  git push origin "$GIT_BRANCH"
+  gh pr create --title '<descriptive title>' --body '<description>' --base '<base-branch>' --head "$GIT_BRANCH"
+  
+  # Switch back to original account after work is done
+  gh auth switch -u "$CURRENT_ACCOUNT"
 fi
 ```
 
 **Multi-account handling**:
-- Before creating the PR, identify the correct account by checking the repository's remote owner: `git remote get-url origin`.
-- Save your current account with `CURRENT_ACCOUNT=$(gh auth status --json login --jq '.[0].login')` before switching.
-- If the current account doesn't match the repo owner, switch using `gh auth switch -h github.com`.
-- After successfully creating the PR, switch back to your original account with `gh auth switch -h github.com`.
-- Reference related issues with `Fixes #<number>` in the PR description if applicable.
+- Save your current account with `CURRENT_ACCOUNT=$(gh api user --jq '.login')` before any operations.
+- Attempt the PR creation first — only switch accounts if you encounter an auth/unauthorized error.
+- When switching is required, verify the current user doesn't match 'aligheisar', then switch with `gh auth switch -u aligheisar`.
+- After successfully completing the PR creation, switch back to your original account with `gh auth switch -u <original-account>`.
+- Always wrap branch names in single quotes when writing them (e.g., `'feat(cli)/my-feature'`.
 
 ### 6. Auto-Triggered Review & Merge (No Explicit User Request)
 
@@ -154,7 +148,7 @@ User asks to apply/review a change to merge
 - Use draft PRs (`draft: true`) when work is incomplete or needs early feedback
 - Run relevant tests before pushing
 - If changes span **two or more independent scopes** (e.g., a fix in one area and an unrelated enhancement in another), create **separate working branches and separate PRs** for each scope rather than batching them into one. Keep each PR focused and reviewable.
-- **Multi-account workflow**: Before switching accounts, save your current account. After completing the task, switch back to your original account using `gh auth switch`.
+- **Multi-account workflow**: Save your current account with `CURRENT_ACCOUNT=$(gh api user --jq '.login')` before any operations. Only switch accounts if you get an auth error — verify current user doesn't match 'aligheisar', then use `gh auth switch -u aligheisar`. After completing work, switch back with `gh auth switch -u $CURRENT_ACCOUNT`. Always wrap branch names in single quotes (e.g., `'feat(cli)/my-feature'`).
 
 ## Dependencies
 
