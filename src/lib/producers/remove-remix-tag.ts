@@ -25,7 +25,7 @@ export class RemoveRemixTagProducer implements Producer {
         path: item.path,
         producedBy: this.name,
         tags: {
-          title: updatedTitle,
+          title: [updatedTitle],
         },
         type: "tag-update",
       });
