@@ -1,11 +1,11 @@
 import "./taglib-runtime.service";
-import { updateFolderTags } from "taglib-wasm/folder";
+import { writeTagsBatch } from "taglib-wasm/simple";
 import { config } from "#/config";
 import { logger } from "#/utils/logger";
 
 type TagUpdate = {
   path: string;
-  tags: Record<string, string | string[] | number>;
+  tags?: Record<string, string | string[] | number>;
 };
 
 type TagWriteError = {
@@ -31,8 +31,11 @@ class TagWriterService {
       offset += config.tagWriteBatchSize
     ) {
       const batch = updates.slice(offset, offset + config.tagWriteBatchSize);
-      const result = await updateFolderTags(
-        batch.map((update) => ({ path: update.path, tags: update.tags })),
+      const result = await writeTagsBatch(
+        batch.map((update) => ({
+          path: update.path,
+          tags: update.tags,
+        })),
         {
           concurrency: config.tagWriteConcurrency,
           continueOnError: true,
