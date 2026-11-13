@@ -1,17 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "opentui": {
       "source": "msmps/opentui-skill",
       "sourceType": "github",
       "skillPath": "skill/opentui/SKILL.md",
-      "computedHash": "2915038bb3297e759f740f9e6bfa885ed80a4a7fe945825f5874b48db9ce0fd2"
+      "computedHash": "804576763754e26f33bb6465f28b5ae7c00ac8d3178f34578dc1d3b97c87b4ef"
     },
     "optique": {
       "source": "dahlia/optique",
       "sourceType": "github",
       "skillPath": "packages/core/skills/optique/SKILL.md",
-      "computedHash": "bdb242d1fa8af798c3a0487602c31b4b1f751263dba2dcf73d0b165b3d192c2a"
+      "computedHash": "958b94af66d6837d9e2ee1137bc999d68d31496f378071f53baafd373a33a476"
     }
   }
 }
