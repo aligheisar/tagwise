@@ -21,7 +21,7 @@ export class RemixTagProducer implements Producer {
         id: `${this.name}-${item.path}`,
         path: item.path,
         producedBy: this.name,
-        tags: { title: `${title} (Remix)` },
+        tags: { title: [`${title} (Remix)`] },
         type: "tag-update",
       });
     }

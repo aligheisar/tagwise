@@ -81,7 +81,7 @@ describe("review tree and producer safety", () => {
       {
         id: "remix-tag-/music/another.mp3",
         path: "/music/another.mp3",
-        tags: { title: "Hello / World! (Remix)" },
+        tags: { title: ["Hello / World! (Remix)"] },
         type: "tag-update",
         producedBy: "remix-tag",
       },
