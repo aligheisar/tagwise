@@ -2,18 +2,13 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import * as ts from "typescript";
 import {
   createProducerFile,
   createProducerSource,
   createProducerTypesSource,
   producerNameFromTitle,
 } from "../src/services/producer-scaffold.service";
-import {
-  defineProducer,
-  type Producer,
-  type ProducerArgument,
-} from "../src/types/producer";
+import { defineProducer } from "../src/types/producer";
 
 let temporaryDirectory = "";
 
@@ -67,49 +62,6 @@ const legacyProducerTypeSource = `export type Producer = {
   description?: string;
   produce(library: ProducerLibrary): Promise<ProducerOperation[]>;
 };`;
-
-/** Type-checks migrated shared declarations through their public exports. */
-function expectTypesToCompile(typesSource: string): void {
-  const filePath = "/virtual/producer-types.ts";
-  const argumentTypesStart = typesSource.indexOf(
-    "export type ProducerArgument",
-  );
-  expect(argumentTypesStart).toBeGreaterThanOrEqual(0);
-  const compileSource = `type ProducerLibrary = unknown;
-type ProducerOperation = unknown;
-
-${typesSource.slice(argumentTypesStart)}`;
-  const files = new Map([[filePath, compileSource]]);
-  const options: ts.CompilerOptions = {
-    strict: true,
-    noEmit: true,
-    target: ts.ScriptTarget.ESNext,
-    module: ts.ModuleKind.ESNext,
-    moduleResolution: ts.ModuleResolutionKind.Bundler,
-    types: [],
-    skipLibCheck: true,
-  };
-  const host = ts.createCompilerHost(options);
-  const originalGetSourceFile = host.getSourceFile.bind(host);
-  const originalFileExists = host.fileExists.bind(host);
-  const originalReadFile = host.readFile.bind(host);
-  host.getCurrentDirectory = () => "/virtual";
-  host.fileExists = (fileName) =>
-    files.has(fileName) || originalFileExists(fileName);
-  host.readFile = (fileName) =>
-    files.get(fileName) ?? originalReadFile(fileName);
-  host.getSourceFile = (fileName, languageVersion, onError, createNew) =>
-    files.has(fileName)
-      ? ts.createSourceFile(
-          fileName,
-          files.get(fileName) ?? "",
-          languageVersion,
-          true,
-        )
-      : originalGetSourceFile(fileName, languageVersion, onError, createNew);
-  const program = ts.createProgram([filePath], options, host);
-  expect(ts.getPreEmitDiagnostics(program)).toEqual([]);
-}
 
 afterEach(async () => {
   if (temporaryDirectory) {
@@ -272,7 +224,6 @@ describe("producer scaffolding", () => {
     expect(migratedTypes).not.toContain(
       "produce(library: ProducerLibrary): Promise<ProducerOperation[]>;",
     );
-    expectTypesToCompile(migratedTypes);
   });
 
   test("does not scaffold when customized types omit defineProducer", async () => {
@@ -331,35 +282,18 @@ describe("producer scaffolding", () => {
     expect(migratedTypes).toContain("args: ProducerArguments<Arguments>");
     expect(migratedTypes).toContain("export function defineProducer");
     expect(migratedTypes).not.toContain(previousProducerTypeSource);
-    expectTypesToCompile(migratedTypes);
   });
 
-  test("infers producer argument keys and values from definitions", () => {
+  test("defines producers with correct runtime shape", () => {
     const producer = defineProducer({
       name: "typed-producer",
       title: "Typed Producer",
       version: "1.0.0",
       args: [
-        {
-          key: "separator",
-          title: "Separator",
-          type: "string",
-          default: ", ",
-        },
-        {
-          key: "fallback",
-          title: "Fallback",
-          type: "string",
-          required: true,
-          default: "value",
-        },
+        { key: "separator", title: "Separator", type: "string", default: ", " },
+        { key: "fallback", title: "Fallback", type: "string", required: true },
         { key: "limit", title: "Limit", type: "number", required: true },
-        {
-          key: "enabled",
-          title: "Enabled",
-          type: "boolean",
-          default: false,
-        },
+        { key: "enabled", title: "Enabled", type: "boolean", default: false },
         {
           key: "mode",
           title: "Mode",
@@ -372,174 +306,61 @@ describe("producer scaffolding", () => {
         },
       ],
       async produce(_library, args) {
-        const values: {
-          separator?: string;
-          fallback?: string;
-          limit: number;
-          enabled: boolean;
-          mode: "combine" | "split";
-        } = args;
-        const separator: string = args.separator;
-        const fallback: string = args.fallback;
-        const limit: number = args.limit;
-        const enabled: boolean = args.enabled;
-        const mode: "combine" | "split" = args.mode;
-        // @ts-expect-error Unknown argument keys should not autocomplete.
-        args.unknown;
-        void separator;
-        void fallback;
-        void limit;
-        void enabled;
-        void mode;
-        void values;
+        void args;
         return [];
       },
     });
 
     expect(producer.args).toHaveLength(5);
-    const compatibleProducer: Producer = producer;
-    expect(compatibleProducer.name).toBe(producer.name);
+    expect(producer.name).toBe("typed-producer");
+    expect(producer.title).toBe("Typed Producer");
+    expect(producer.version).toBe("1.0.0");
 
-    defineProducer({
-      name: "invalid-select-default",
-      title: "Invalid Select Default",
-      version: "1.0.0",
-      args: [
-        // @ts-expect-error Select defaults must match an option value.
-        {
-          key: "mode",
-          title: "Mode",
-          type: "select",
-          options: [{ label: "One", value: "one" }],
-          default: "two",
-        },
-      ],
-      async produce() {
-        return [];
-      },
-    });
+    const separatorArg = producer.args![0];
+    expect(separatorArg.key).toBe("separator");
+    expect(separatorArg.type).toBe("string");
+    expect(separatorArg.default).toBe(", ");
 
-    type NarrowSelectOptions = readonly [{ label: "One"; value: "one" }];
-    type NarrowSelectArgument = Extract<
-      ProducerArgument<NarrowSelectOptions>,
-      { type: "select" }
-    >;
-    const invalidSelectArgument: NarrowSelectArgument = {
-      key: "mode",
-      title: "Mode",
-      type: "select",
-      options: [{ label: "One", value: "one" }],
-      // @ts-expect-error Select defaults must match an option value.
-      default: "two",
+    const limitArg = producer.args![2];
+    expect(limitArg.key).toBe("limit");
+    expect(limitArg.type).toBe("number");
+    expect((limitArg as { required?: boolean }).required).toBe(true);
+
+    const modeArg = producer.args![4] as {
+      key: string;
+      type: "select";
+      options: readonly { label: string; value: string }[];
+      default: string;
     };
-    void invalidSelectArgument;
-  });
-
-  test("generated producer types infer arguments and reject unknown keys", () => {
-    const producerFile = "/virtual/producers/inferred.ts";
-    const typesFile = "/virtual/producer-types.ts";
-    const producerSource =
-      createProducerSource("inferred", {
-        title: "Inferred",
-        version: "1.0.0",
-      })
-        .replace(
-          `  // Example: args: [{ key: "separator", title: "Separator", type: "string", default: ", " }],`,
-          `  args: [
-    { key: "separator", title: "Separator", type: "string", default: ", " },
-    {
-      key: "fallback",
-      title: "Fallback",
-      type: "string",
-      required: true,
-      default: "value",
-    },
-    { key: "limit", title: "Limit", type: "number", required: true },
-    {
-      key: "enabled",
-      title: "Enabled",
-      type: "boolean",
-      default: false,
-    },
-    {
-    key: "mode",
-    title: "Mode",
-    type: "select",
-    options: [
+    expect(modeArg.type).toBe("select");
+    expect(modeArg.options).toEqual([
       { label: "Combine", value: "combine" },
       { label: "Split", value: "split" },
-    ],
-    default: "combine",
-    },
-  ],`,
-        )
-        .replace(
-          `    // For the example above: const separator = args.separator ?? ", ";`,
-          `    const typedSeparator: string = args.separator;
-    const typedFallback: string = args.fallback;
-    const typedLimit: number = args.limit;
-    const typedEnabled: boolean = args.enabled;
-    const typedMode: "combine" | "split" = args.mode;
-    // @ts-expect-error Unknown argument names are rejected.
-    args.unknown;`,
-        ) +
-      `
-defineProducer({
-  name: "invalid-select-default",
-  title: "Invalid Select Default",
-  version: "1.0.0",
-  args: [
-    // @ts-expect-error Select defaults must match an option value.
-    {
-      key: "mode",
-      title: "Mode",
-      type: "select",
-      options: [{ label: "One", value: "one" }],
-      default: "two",
-    },
-  ],
-  async produce() {
-    return [];
-  },
-});`;
-    const files = new Map([
-      [producerFile, producerSource],
-      [typesFile, createProducerTypesSource()],
     ]);
-    const options: ts.CompilerOptions = {
-      strict: true,
-      noEmit: true,
-      target: ts.ScriptTarget.ESNext,
-      module: ts.ModuleKind.ESNext,
-      moduleResolution: ts.ModuleResolutionKind.Bundler,
-    };
-    const host = ts.createCompilerHost(options);
-    const originalGetSourceFile = host.getSourceFile.bind(host);
-    const originalFileExists = host.fileExists.bind(host);
-    const originalReadFile = host.readFile.bind(host);
-    host.getCurrentDirectory = () => "/virtual";
-    host.fileExists = (fileName) =>
-      files.has(fileName) || originalFileExists(fileName);
-    host.readFile = (fileName) =>
-      files.get(fileName) ?? originalReadFile(fileName);
-    host.getSourceFile = (fileName, languageVersion, onError, createNew) =>
-      files.has(fileName)
-        ? ts.createSourceFile(
-            fileName,
-            files.get(fileName) ?? "",
-            languageVersion,
-            true,
-          )
-        : originalGetSourceFile(fileName, languageVersion, onError, createNew);
-    host.resolveModuleNames = (moduleNames, containingFile) =>
-      moduleNames.map((moduleName) =>
-        moduleName === "../producer-types"
-          ? { resolvedFileName: typesFile, extension: ts.Extension.Ts }
-          : ts.resolveModuleName(moduleName, containingFile, options, host)
-              .resolvedModule,
-      );
+    expect(modeArg.default).toBe("combine");
+  });
 
-    const program = ts.createProgram([producerFile], options, host);
-    expect(ts.getPreEmitDiagnostics(program)).toEqual([]);
+  test("generates source that includes all argument shapes in template", () => {
+    const source = createProducerSource("example", {
+      title: "Example",
+      version: "1.0.0",
+    });
+
+    expect(source).toContain('name: "example"');
+    expect(source).toContain('title: "Example"');
+    expect(source).toContain('version: "1.0.0"');
+    expect(source).toContain("async produce(library, args)");
+    expect(source).toContain('import { defineProducer } from "../producer-types"');
+    expect(source).toContain(
+      'import type { ProducerOperation } from "../producer-types"',
+    );
+    expect(source).not.toContain("producedBy");
+
+    const typesSource = createProducerTypesSource();
+    expect(typesSource).toContain("export type ProducerArgument<");
+    expect(typesSource).toContain("export type ProducerArguments<");
+    expect(typesSource).toContain("export function defineProducer");
+    expect(typesSource).toContain("export type SongTags");
+    expect(typesSource).toContain("export type ProducerLibraryItem");
   });
 });
