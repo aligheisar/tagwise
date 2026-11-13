@@ -17,6 +17,7 @@
     "attributePosition": "auto",
     "bracketSpacing": true,
     "formatWithErrors": false,
+    "includes": ["src/**"],
     "indentStyle": "space"
   },
   "linter": {
